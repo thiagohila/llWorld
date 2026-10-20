@@ -1,0 +1,3 @@
+[submodule "worldbox"]
+	path = worldbox
+	url = git@github.com:thiagohila/worldbox.git
