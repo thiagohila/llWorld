@@ -6,6 +6,10 @@
 
 - `../llWorld-visao-produto.md` — visão de produto: o que queremos construir e por quê. Fonte de verdade sobre o *quê*.
 
+## Ambiente
+
+- `ambiente.md` — versões de tudo que o projeto usa (Python, git, fork, modelos de LLM, portas) e como montar do zero.
+
 ## Referência do jogo (fork `worldbox/`)
 
 | Arquivo | Quando ler |
@@ -16,6 +20,7 @@
 | `worldbox/04-interfaces.md` | mapa ao vivo (HTTP), terminal, viewer gravado |
 | `worldbox/05-executar-e-testar.md` | ambiente, comandos, determinismo, regressão |
 | `worldbox/06-extensao-e-armadilhas.md` | onde plugar código sem editar o fork; problemas conhecidos |
+| `worldbox/07-seguranca.md` | chaves/segredos, riscos do servidor local, mitigações |
 
 ## Rascunhos
 

@@ -6,7 +6,7 @@ Princípio: **a simulação manda nas regras do mundo; a LLM propõe decisões d
 
 ## Fase atual
 
-Documentação e preparação de ambiente (Python 3.10 em instalação; ajustes no terreno). **Não implementar o `worldbox-ai/` sem pedido explícito.**
+Documentação e preparação de ambiente (ajustes no terreno). **Não implementar o `worldbox-ai/` sem pedido explícito.**
 
 ## Camadas
 
@@ -20,9 +20,11 @@ Documentação e preparação de ambiente (Python 3.10 em instalação; ajustes 
 |---|---|
 | o que estamos construindo | `llWorld-visao-produto.md` |
 | índice e convenções dos docs | `docs/README.md` |
+| versões (Python, git, fork, modelos LLM, portas) e setup do zero | `docs/ambiente.md` |
 | como o jogo funciona, por tema | `docs/worldbox/01..06-*.md` |
 | rodar e testar | `docs/worldbox/05-executar-e-testar.md` |
 | onde plugar código e problemas conhecidos | `docs/worldbox/06-extensao-e-armadilhas.md` |
+| segurança (chaves, servidor local) | `docs/worldbox/07-seguranca.md` |
 | ideias (não aprovadas) para a IA | `docs/rascunhos/` |
 
 Leia sob demanda; não carregue tudo.
@@ -34,8 +36,8 @@ Leia sob demanda; não carregue tudo.
 
 ## Essenciais do ambiente
 
-- Python 3.10+; o `python3` do pyenv (3.8) não funciona.
-- Dentro de `worldbox/`: `PYTHONDONTWRITEBYTECODE=1 python3.10 -m worldbox.main --no-ai --days 3000 --seed 42`.
+- Python 3.14 na `.venv` da raiz (`source .venv/bin/activate`; recriar com `python3.14 -m venv .venv`). O `python3` global do pyenv (3.8) não funciona.
+- Dentro de `worldbox/`: `PYTHONDONTWRITEBYTECODE=1 python -m worldbox.main --no-ai --days 3000 --seed 42`.
 - Mapa ao vivo em `http://127.0.0.1:8765/` (não `localhost`: OrbStack usa a porta).
 - Não há testes automatizados; regressão = md5 com mesmo seed, sem chaves de API no ambiente.
 
@@ -44,3 +46,4 @@ Leia sob demanda; não carregue tudo.
 - Comunicação com o usuário e docs em português; código do fork em inglês.
 - Docs marcam **[código]** / **[executado]** / **[hipótese]** e citam `arquivo.py:função`.
 - Ao atualizar o submódulo, revisar `docs/worldbox/` e o hash de referência em `docs/README.md`.
+- Mudou versão de qualquer coisa (Python, fork, modelo, dependência)? Atualizar `docs/ambiente.md`.
