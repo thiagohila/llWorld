@@ -18,6 +18,7 @@ Nenhuma interface muda regras: todas leem o motor por `runner.lock`. As únicas 
 | `/act?tool=&x=&y=&radius=` | ferramentas de deus (quebram determinismo) |
 | `/found?x=&y=&name=&house=&people=` | planta uma civilização com provedor escolhido |
 | `/control?action=&value=` | pause, resume, speed |
+| `/sprites/<arquivo>` | spritesheets e `sprites.json` de `static/sprites/`; só nomes simples `.png`/`.json` (sem `..`), lidos do disco a cada request |
 
 - **[executado]** Nesta máquina o OrbStack ocupa `*:8765`; `localhost` cai nele. Usar `127.0.0.1`.
 
@@ -27,6 +28,8 @@ Nenhuma interface muda regras: todas leem o motor por `runner.lock`. As únicas 
 - Esquerda: barra de ícones (camadas e poderes) + gaveta contextual com descrição, raio e formulário de fundação. Prévia do raio no mapa.
 - Direita: abas Inspect / Civs / Minds / Tech / History. Embaixo: log com filtros (Life desligado por padrão), toasts para guerras, pragas, invenções e marcos, minimapa clicável.
 - Sprites em pixel art gerados no navegador: terreno pré-renderizado (8 px por tile, 2 quadros de animação), pessoas 9×11 por profissão/estado, prédios por nível (Camp → City), placas de nome.
+- **Arte desenhada (2026-10-21):** spritesheets do Claude Design em `cli/static/sprites/` (`people`, `overlays`, `buildings`, `terrain`, `props` + `sprites.json` com células e âncoras). A página troca, pixel a pixel, o magenta (`#FF00FF`/`#FF80FF`/`#A000A0`) pela cor da tribo e pele/cabelo neutros pela variação da tribo; usa quadros de andar só para quem se moveu; árvores e efeitos dos poderes vêm de `props`. Praias e espuma continuam geradas por código (os tiles não têm transições). Sem os arquivos, cai nos sprites gerados. Trocar a arte = substituir os arquivos e dar F5.
+- Ao carregar, a página envia ao servidor a velocidade destacada (1×), para não rodar no default de 0,12 s do `config.py`.
 - Atalhos: `Espaço` pausa · `1`–`6` poderes · `N` fundar · `L` alterna camadas · `F` enquadrar · `+`/`-` zoom · `[`/`]` velocidade · `Esc` cancela.
 
 ## Terminal — `cli/terminal.py`, `cli/live.py`
