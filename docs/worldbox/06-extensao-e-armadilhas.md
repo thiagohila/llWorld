@@ -19,10 +19,10 @@ Padrão para qualquer código com LLM: snapshot sob `runner.lock` → chamada fo
 
 ## Armadilhas conhecidas
 
-- **[código]** Falha de API não atualiza `last_thought` (`MindDirector._drain`) → a tribo pede de novo todo dia simulado.
-- **[código]** `parse_policy({})` vira política padrão e substitui a anterior em silêncio.
+- ~~Falha de API repete todo dia~~ — corrigido: backoff por tribo e parada geral em 401/403/404 (ver `03-ia.md`, Controle de custo).
+- ~~`parse_policy({})` vira política padrão~~ — corrigido: `_drain` rejeita política vazia.
 - **[código]** `_nudge_diplomacy` aplica `toward` todo dia: decisões de guerra/paz acumulam rápido.
-- **[código]** Narrador só funciona com `DEEPSEEK_API_KEY`: `narrate()` checa `api_key()` sem passar o env da OpenAI, enquanto quem o chama aceita qualquer chave.
+- ~~Narrador só funciona com `DEEPSEEK_API_KEY`~~ — corrigido: aceita qualquer chave.
 - **[executado]** Vazamento de determinismo: `_spawn_founder` atribui `ai_house` mesmo com `--no-ai`; em `_process_births` o `rng.random()` só é sorteado se os pais têm casas diferentes (só acontece com as duas chaves).
 - **[código]** Chefe reescolhido todo dia: não há líder fixo.
 - **[código]** Memória do agente com 8 entradas; nenhuma relação entre indivíduos.

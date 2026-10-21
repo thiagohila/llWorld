@@ -15,10 +15,10 @@ Formato: `- [ ] **título** — detalhe. Onde. Ref.` · Prioridade: 🔴 alta ·
 
 ## IA (mentes das tribos)
 
-- [ ] 🔴 **Falha de API repete todo dia** — `_drain` não atualiza `last_thought` em erro; com chave inválida cada tribo chama a API a cada dia simulado. `ai/minds.py:MindDirector._drain`/`_schedule`.
-- [ ] 🟡 **`parse_policy({})` substitui a política** — JSON vazio vira política padrão em silêncio. `ai/minds.py:parse_policy`.
+- [x] 🔴 **Falha de API repete todo dia** — backoff exponencial por tribo (dias simulados e tempo real); 401/403/404 param todas as mentes até o reset. commit `d6472e1`.
+- [x] 🟡 **`parse_policy({})` substitui a política** — JSON vazio agora é rejeitado em `MindDirector._drain` e conta como falha. commit `d6472e1`.
 - [ ] 🟡 **`tribe_id` inválido passa no parse** — só é ignorado na aplicação. `ai/minds.py:parse_policy`, `_nudge_diplomacy`.
-- [ ] 🟡 **Narrador só funciona com DeepSeek** — `narrate` checa só `DEEPSEEK_API_KEY`; com apenas OpenAI, "No API key". `ai/narrator.py:narrate`.
+- [x] 🟡 **Narrador só funciona com DeepSeek** — `narrate` aceita qualquer chave e `chat()` cai no provedor disponível. commit `d6472e1`.
 - [ ] ⚪ **`errors` alterado sem lock** — `_drain` escreve em `self.errors` fora de `_lock`, enquanto `snapshot` lê com lock. `ai/minds.py`.
 
 ## Determinismo e testes
@@ -50,6 +50,7 @@ Ref.: `docs/worldbox/08-performance.md`.
 ## Interface
 
 - [x] 🟡 **Poderes sem feedback** — `/act` funcionava, mas os eventos são `EventKind.SYSTEM`, que não entra em `LOGGED_KINDS` (`cli/webview.py`), e Bless/Blight só aparecem nas camadas Farm/Food. Resolvido no front-end (`static/live.html`): efeito visual, toast com o resultado e filtro "Powers" no log. commit `b10f9fb`.
+- [x] 🔴 **Smite não matava ninguém** — zerava a saúde, mas a regeneração do dia seguinte roda antes da checagem de morte (0/14 morreram no teste); e marcava ferimento, o que contaria as mortes como guerra. Agora mata na hora com a contabilidade do motor (14/14, `total_war_deaths` intacto). `cli/webview.py:LiveState.act`. commit `d6472e1`.
 - [ ] ⚪ **Eventos `SYSTEM` fora do feed do servidor** — quem consumir `/state` (ex.: `worldbox-ai`) não vê o uso de poderes. Avaliar incluir `system` em `LOGGED_KINDS`.
 
 ## Divergências de documentação do fork

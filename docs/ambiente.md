@@ -22,9 +22,9 @@ Fonte única das versões do projeto. Atualize aqui quando algo mudar e registre
 
 | Item | Versão |
 |---|---|
-| Fork `worldbox/` (submódulo) | `6804118` (2026-10-21; 3 commits à frente do upstream), `git@github.com:thiagohila/worldbox.git`, branch `main`; versão do pacote `0.1.0` |
+| Fork `worldbox/` (submódulo) | `d6472e1` (2026-10-21; 4 commits à frente do upstream), `git@github.com:thiagohila/worldbox.git`, branch `main`; versão do pacote `0.1.0` |
 | Upstream do fork | `https://github.com/ryfcx/worldbox` (remote `upstream` no submódulo) — mesmo commit `4579b3c` em 2026-10-20 |
-| Docs de referência do fork | descrevem `6804118` |
+| Docs de referência do fork | descrevem `d6472e1` |
 | `worldbox-ai/` | ainda não existe |
 
 ## Serviços externos (opcionais)
@@ -35,8 +35,10 @@ Só usados com IA ligada (sem `--no-ai` e com chave em `worldbox/.env`). Definid
 |---|---|---|---|
 | DeepSeek | `deepseek-flash` | `https://api.deepseek.com/chat/completions` | `DEEPSEEK_API_KEY` |
 | OpenAI | `gpt-5-mini` | `https://api.openai.com/v1/chat/completions` | `OPENAI_API_KEY` |
+| Qualquer compatível com OpenAI | `LLM_MODEL` | `LLM_BASE_URL` (+`/chat/completions`) | `LLM_API_KEY` (opcional) |
+| Mente offline por regras | — | `LLM_BASE_URL=mock` | — |
 
-O narrador só funciona com a chave DeepSeek (ver `worldbox/06-extensao-e-armadilhas.md`).
+Opções grátis (Groq, Gemini, OpenRouter `:free`, Ollama local) e limites: `worldbox/03-ia.md` → Fontes de LLM. O narrador funciona com qualquer fonte.
 
 ## Portas locais
 
