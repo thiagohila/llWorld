@@ -108,6 +108,18 @@ class ArthurServer:
                 return {"ok": False, "error": "Cap must be a number."}
         return {"ok": True, "cap": minds.call_cap()}
 
+    def set_minds(self, value: Any) -> Dict[str, Any]:
+        """How many tribes an LLM plays (empty = back to .env/config)."""
+        minds = self.engine.minds
+        if value in (None, ""):
+            minds.set_max_minds(None)
+        else:
+            try:
+                minds.set_max_minds(max(0, min(20, int(float(value)))))
+            except (TypeError, ValueError):
+                return {"ok": False, "error": "Count must be a number."}
+        return {"ok": True, "max_minds": minds.mind_slots()}
+
     def llm_report(self) -> Dict[str, Any]:
         """Every LLM source and every purpose that uses one, with consumption.
 
@@ -158,6 +170,7 @@ class ArthurServer:
                 "model": ", ".join(tribe_models) or "—",
                 "state": master_state(None if minds_on else "desligado (--no-ai)"),
                 "control": "geral",
+                "slots": {"managed": mind_use["managed"], "max": mind_use["max_minds"]},
                 "usage": {"calls": mind_use["calls"], "skipped": mind_use["skipped"], "failures": mind_use["failures"],
                           "tokens_in": mind_use["tokens_in"], "tokens_out": mind_use["tokens_out"],
                           "tokens_cached": mind_use["tokens_cached"], "per_minute": mind_use["per_minute"]},
@@ -317,6 +330,8 @@ def _handler_factory(app: ArthurServer):
                     self._json(app.set_llm(str(payload.get("value") or "toggle"), str(payload.get("target") or "all")))
                 elif parsed.path == "/api/llm/cap":
                     self._json(app.set_cap(payload.get("value")))
+                elif parsed.path == "/api/llm/minds":
+                    self._json(app.set_minds(payload.get("value")))
                 else:
                     self.send_error(404)
             except (BrokenPipeError, ConnectionResetError):

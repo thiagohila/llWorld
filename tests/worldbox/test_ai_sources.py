@@ -59,7 +59,12 @@ stances = sorted({p.stance for p in pols.values()})
 inv = [p.invent.name for p in pols.values() if p.invent]
 u = eng.minds.usage_snapshot()
 check("K mock: policies applied without network", len(pols) > 0 and u["failures"] == 0, (len(pols), u))
-check("K mock: varied stances", len(stances) >= 2, stances)
+from worldbox.ai import mock
+hungry = mock.decide("You are the mind of the A (tribe_id 1).\nPeople: 20. Hunger: 70/100.")
+at_war = mock.decide("You are the mind of the A (tribe_id 1).\nPeople: 20. Hunger: 10/100.\n  tribe_id 2 B: 40 people, Camp, Stone Age, relation -80, 3 tiles AT WAR.")
+calm = mock.decide("You are the mind of the A (tribe_id 1).\nPeople: 12. Hunger: 10/100.")
+check("K mock: stance follows the situation", (hungry["stance"], at_war["stance"], calm["stance"]) == ("farm", "defend", "expand"),
+      (hungry["stance"], at_war["stance"], calm["stance"]))
 check("K mock: houses labelled", eng.minds.snapshot(eng)[0].model.startswith("Mock"), eng.minds.snapshot(eng)[0].model)
 print("   mock inventions in progress:", inv[:4], "| stances:", stances)
 

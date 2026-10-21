@@ -47,6 +47,7 @@ python arthur/run.py --no-open --port 8765 --arthur-port 8766
 | `POST /api/send` `{text}` | manda uma mensagem ao rei; a resposta chega por `/api/messages` |
 | `POST /api/llm` `{value: on\|off\|toggle, target: all\|arthur_chat}` | `all` (padrão): interruptor geral do jogo (tribos, narrador e Arthur); `arthur_chat`: só a conversa do Arthur |
 | `GET /api/llm/report` | aba **LLMs**: fontes configuradas (modelo, endpoint, quem usa — nunca a chave), propósitos (mentes das tribos, narrador, conversa do Arthur, decisões do Arthur) com estado, controle e consumo, e o total |
+| `POST /api/llm/minds` `{value}` | quantas tribos (as maiores) a LLM governa (vazio = volta ao `.env`/config) |
 | `POST /api/llm/cap` `{value}` | teto de chamadas por minuto das mentes (vazio = volta ao `.env`/config) |
 
 ## HUD

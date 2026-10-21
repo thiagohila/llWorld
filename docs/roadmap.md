@@ -4,7 +4,7 @@ Atualizado em 2026-10-21. O *quê* está em `../llWorld-visao-produto.md`; ideia
 
 ## Estado atual
 
-### O jogo — fork `worldbox/` em `9f7e3f5` (funcionando)
+### O jogo — fork `worldbox/` em `e228169` (funcionando)
 
 Roda como veio do `ryfcx/worldbox`, com melhorias pontuais — nenhuma regra de simulação mudou (md5 de regressão idêntico desde o início):
 

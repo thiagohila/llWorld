@@ -57,6 +57,20 @@ r = state.control("ai_cap", "")
 check("empty cap -> back to .env", r["aiCap"] == 9, r["aiCap"])
 os.environ.pop("LLM_MAX_CALLS_PER_MINUTE")
 
+check("LLM plays at most 3 tribes by default", eng.minds.mind_slots() == 3 and len(eng.minds.policies) <= 3, (eng.minds.mind_slots(), len(eng.minds.policies)))
+check("/state marks managed tribes", {c["id"] for c in state.snapshot()["civs"] if c["llm"]} == set(eng.minds.managed_ids()))
+r = state.control("ai_minds", "1")
+check("runtime tribe count", r["aiMinds"] == 1)
+eng.step()
+check("tribes outside the count go back to the rules", len(eng.minds.policies) <= 1, len(eng.minds.policies))
+os.environ["LLM_MAX_MINDS"] = "2"
+state.control("ai_minds", "")
+check("empty count -> back to .env", eng.minds.mind_slots() == 2)
+os.environ.pop("LLM_MAX_MINDS")
+check("no .env -> config default", eng.minds.mind_slots() == 3)
+run(400)
+check("never more than the count", len(eng.minds.policies) <= 3, len(eng.minds.policies))
+
 r = state.control("ai_forget", None)
 check("forget drops policies", r.get("forgotten", 0) >= 1 and not eng.minds.policies, r)
 

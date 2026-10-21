@@ -208,17 +208,22 @@ function renderLLMs(r){
        '<div class="kv"><span>modelo</span><span>'+esc(p.model)+'</span></div>'+
        '<div class="kv"><span>estado</span><span class="state '+stateClass(p.state)+'">'+esc(p.state)+'</span></div>'+
        '<div class="kv"><span>controle</span><span>'+esc(p.control)+'</span></div>'+
+       (p.slots?'<div class="kv"><span>tribos com LLM</span><span>'+p.slots.managed+' de até '+p.slots.max+' (as maiores)</span></div>'+
+         '<div class="ctl"><span>máximo</span><button data-minds="-1">−</button><b style="color:var(--ink)">'+p.slots.max+'</b><button data-minds="1">+</button>'+
+         '<span>— no mapa, um selo azul marca cada uma</span></div>':'')+
        (bits.length?'<div class="usage">'+esc(bits.join(" · "))+'</div>':'')+
        (p.control==="própria"?'<div class="ctl"><button data-llm="'+esc(p.id)+'" data-v="'+(p.enabled?"off":"on")+'">'+(p.enabled?"Desligar esta":"Ligar esta")+'</button></div>':'')+
        '</div>'});
   $("llms").innerHTML=h;
 }
-var lastCap=null;
-function pollLLMs(){return api("/api/llm/report").then(function(r){if(!r.ok)return;lastCap=r.master.cap;renderLLMs(r)}).catch(function(){})}
+var lastCap=null,lastMinds=null;
+function pollLLMs(){return api("/api/llm/report").then(function(r){if(!r.ok)return;lastCap=r.master.cap;
+  var tp=r.purposes.filter(function(p){return p.slots})[0];if(tp)lastMinds=tp.slots.max;renderLLMs(r)}).catch(function(){})}
 $("llms").addEventListener("click",function(e){
   var b=e.target.closest("button");if(!b)return;
   if(b.dataset.llm)api("/api/llm",{target:b.dataset.llm,value:b.dataset.v}).then(function(){pollLLMs();pollState()});
   else if(b.dataset.cap)api("/api/llm/cap",{value:Math.max(0,(lastCap||0)+(+b.dataset.cap))}).then(function(){pollLLMs();pollState()});
+  else if(b.dataset.minds)api("/api/llm/minds",{value:Math.max(0,(lastMinds||0)+(+b.dataset.minds))}).then(pollLLMs);
 });
 setInterval(function(){if(!document.hidden&&pane==="llms")pollLLMs()},2000);
 setInterval(function(){if(!document.hidden&&pane!=="llms")pollLLMs()},6000);

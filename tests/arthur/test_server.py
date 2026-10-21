@@ -103,6 +103,12 @@ try:
     req("POST", "/api/llm", {"target": "arthur_chat", "value": "on"}, token=token, origin=origin)
     _, r = req("POST", "/api/llm/cap", {"value": 4}, token=token, origin=origin)
     check("cap from Arthur's HUD", r.get("cap") == 4 and engine.minds.call_cap() == 4)
+    _, r = req("POST", "/api/llm/minds", {"value": 2}, token=token, origin=origin)
+    check("tribe count from Arthur's HUD", r.get("max_minds") == 2 and engine.minds.mind_slots() == 2)
+    _, rep = req("GET", "/api/llm/report", token=token)
+    tp = next(p for p in rep["purposes"] if p["id"] == "tribes")
+    check("report shows managed/max tribes", tp["slots"]["max"] == 2, tp.get("slots"))
+    req("POST", "/api/llm/minds", {"value": ""}, token=token, origin=origin)
     check("unknown LLM target rejected", req("POST", "/api/llm", {"target": "nope", "value": "off"}, token=token, origin=origin)[1].get("ok") is False)
     for k in ("LLM_BASE_URL", "LLM_MODEL", "LLM_API_KEY"): os.environ.pop(k)
 

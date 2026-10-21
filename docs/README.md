@@ -40,5 +40,5 @@
 
 - Marcação de confiança: **[código]** lido no fonte · **[executado]** verificado rodando · **[hipótese]** não verificado.
 - Referências como `arquivo.py:função`, relativas a `worldbox/worldbox/` (o pacote) salvo indicação.
-- A referência descreve o fork no commit **`9f7e3f5`** (upstream `4579b3c` + HUD/sprites `b10f9fb` + performance `bfe84cd` + arte desenhada `6804118` + fontes de LLM/custo/Smite `d6472e1` + README `6dc41f1` + interruptor de LLM `e405b54` + extensões/uso do narrador `9f7e3f5`). Ao atualizar o submódulo, revisar os docs afetados e atualizar este hash.
+- A referência descreve o fork no commit **`e228169`** (upstream `4579b3c` + HUD/sprites `b10f9fb` + performance `bfe84cd` + arte desenhada `6804118` + fontes de LLM/custo/Smite `d6472e1` + README `6dc41f1` + interruptor de LLM `e405b54` + extensões/uso do narrador `9f7e3f5` + 3 tribos com LLM e marcadores `e228169`). Ao atualizar o submódulo, revisar os docs afetados e atualizar este hash.
 - Docs curtos e por tema. Detalhe que só o código responde fica no código; aqui vai o mapa.
