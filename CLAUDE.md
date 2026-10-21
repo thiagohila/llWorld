@@ -7,7 +7,8 @@ Princípio: **a simulação manda nas regras do mundo; a LLM propõe decisões d
 ## Fase atual (2026-10-21)
 
 - **Concluída — o jogo:** o fork roda como veio, com melhorias (HUD e arte nova, −27–33% de custo por dia, poderes com feedback, Smite corrigido, mentes de LLM com controle de custo e fontes grátis — Gemini testado de verdade).
-- **Próxima — o projeto:** implementar o `worldbox-ai/` (conselheiro do Rei Arthur) e ajustar as camadas/interfaces entre ele e o jogo. Plano por etapas em `docs/roadmap.md`; decisões de produto em aberto em `docs/pendencias/projeto.md`.
+- **Próxima — o projeto:** implementar o `worldbox-ai/` (conselheiro do Rei Arthur) e ajustar as camadas/interfaces entre ele e o jogo. Plano por etapas em `docs/roadmap.md`. Etapa 0 (decisões) feita: **tudo no mais simples, tudo no Gemini** — ver roadmap → Decisões da v1. Próxima: etapa 1 (esqueleto).
+- LLM controlável em jogo: botão **AI**/tecla `M`, `/control?action=ai…`, `ai on|off|cap|forget` no terminal. O Arthur deve obedecer o mesmo interruptor e teto.
 - Trabalhar em etapas pequenas e testáveis, combinadas com o Thiago antes de começar cada uma. Decisões de produto são dele.
 
 ## Camadas

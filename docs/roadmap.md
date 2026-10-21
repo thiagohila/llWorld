@@ -4,7 +4,7 @@ Atualizado em 2026-10-21. O *quê* está em `../llWorld-visao-produto.md`; ideia
 
 ## Estado atual
 
-### O jogo — fork `worldbox/` em `6dc41f1` (funcionando)
+### O jogo — fork `worldbox/` em `e405b54` (funcionando)
 
 Roda como veio do `ryfcx/worldbox`, com melhorias pontuais — nenhuma regra de simulação mudou (md5 de regressão idêntico desde o início):
 
@@ -44,14 +44,27 @@ llWorld/
 | Observar acontecimentos | `engine.events.subscribe(fn)` — recebe todos os tipos, inclusive os poderes (`SYSTEM`) que o feed HTTP omite | **pronto** [código] |
 | Decidir pela tribo do Arthur | subclasse de `ai.minds.MindDirector` atribuída a `engine.minds`; validar com `parse_policy` / `TribePolicy` | **pronto** [código] |
 | Chamar a LLM | `ai.client.chat()` com as fontes do `.env` (DeepSeek, OpenAI, compatível com OpenAI, `mock`); `ChatResult` traz `status`, `fatal`, tokens | **pronto** [código] |
-| Controlar custo | `MindDirector` já limita as tribos; o loop do Arthur precisa do mesmo cuidado (teto por minuto compartilhado) | **a fazer** no `worldbox-ai` |
+| Ligar/desligar LLM em jogo | `engine.minds.paused` / `set_paused()`, `set_call_cap()`, `forget_policies()`; HTTP `/control?action=ai` / `ai_cap` / `ai_forget`; botão **AI** e tecla `M` no HUD; `ai on/off/cap/forget` no terminal | **pronto** [código] |
+| Controlar custo | `MindDirector` já limita as tribos; o loop do Arthur **usa o mesmo teto** (`call_cap`, `calls_last_minute`) e **respeita `paused`** | **a fazer** no `worldbox-ai` |
 | Fundar o reino | mesmo caminho do `/found` (`groups.create` + agentes) — hoje dentro de `LiveState.found_civ` | **a extrair** (função reutilizável) ou duplicar no `worldbox-ai` |
-| Arthur fixo como chefe | `society.culture.choose_chieftain` chamado via módulo → patch por fora; ou gancho no fork | **decisão** |
-| Arthur não morrer / sucessão | `Agent.lifespan_days` e mortes em `engine._process_deaths` | **decisão** |
-| Reino não se dividir/dissolver | `GroupRegistry.try_split` / `find_unviable` → patch ou gancho | **decisão** |
-| Chat (HTTP) | servidor próprio do `worldbox-ai`, outra porta, mesmo processo, com `Host` validado, token e POST | **a fazer** |
-| UI do chat | página própria do `worldbox-ai` ou painel no `live.html` | **decisão** |
-| Importar o fork | `sys.path` num único ponto do entrypoint (fork não é instalável) | **decisão** (proposta v1) |
+| Arthur fixo como chefe | patch por fora em `society.culture.choose_chieftain` (chamado via módulo) | **decidido**, a fazer |
+| Arthur imortal (sem sucessão) | `Agent.lifespan_days` e saúde mínima, por fora; conferir `engine._process_deaths` | **decidido**, a fazer |
+| Reino não se divide nem se dissolve | patch por fora em `GroupRegistry.try_split` / `find_unviable` para a tribo do reino | **decidido**, a fazer |
+| Chat (HTTP) | rotas genéricas `/ext/<id>/…` no servidor do fork, repassadas à extensão; POST + `Host` validado + token | **etapa 1** |
+| UI do chat | painel genérico de conversa no HUD do fork, alimentado por uma extensão registrada pelo `worldbox-ai` (o fork não sabe do Arthur) | **decidido**, etapa 1 |
+| Importar o fork | `sys.path` num único ponto do entrypoint (fork não é instalável) | **decidido** |
+
+## Decisões da v1 (2026-10-21)
+
+Regra: **o mais simples para começar.** Detalhes em `pendencias/projeto.md`.
+
+- Reino fundado para Arthur no início; Arthur imortal; o reino não se divide nem se dissolve.
+- Tudo no Gemini (`gemini-3.1-flash-lite`); `mock` para desenvolver e testar.
+- Arthur obedece o mesmo interruptor de LLM das tribos e divide o mesmo teto de chamadas.
+- Sem conhecimento limitado na v1: Arthur vê o relatório da própria tribo.
+- O mundo segue no ritmo escolhido durante a conversa; conversa em português.
+- **Interface no jogo, lógica no projeto:** o HUD do fork tem um painel de conversa genérico; persona, conversa com o Gemini, memória e decisões do Arthur ficam no `worldbox-ai`, que registra uma extensão no servidor do jogo. Decisões do Arthur entram no mundo pelo formato que o jogo já valida (`TribePolicy`).
+- Mudanças no fork: preferir contornar por fora; gancho mínimo só se não houver jeito.
 
 ## Próximas etapas (proposta)
 
@@ -59,7 +72,7 @@ Cada etapa é pequena, testável offline com a mente `mock` e não muda a regres
 
 | # | Etapa | Pronto quando |
 |---|---|---|
-| 0 | **Decisões de produto** — origem do reino, morte/sucessão, divisão, ritmo do mundo na conversa, idioma, modelo (`pendencias/projeto.md`) | decisões registradas |
+| 0 ✅ | **Decisões de produto** — tudo no mais simples, tudo no Gemini (ver abaixo) | feito em 2026-10-21 |
 | 1 | **Esqueleto do `worldbox-ai/`** — entrypoint que monta engine + runner + mapa do fork; ponte de import; config; pasta de testes com o harness offline (API simulada) | `worldbox-ai` abre o mapa como hoje; testes offline passam; md5 do fork intacto |
 | 2 | **Reino do Arthur** — fundar o reino no início, Arthur chefe fixo, persona aplicada aos traços dele | Arthur aparece como chefe e continua chefe por N anos de jogo |
 | 3 | **Mente do Arthur** — a tribo dele decidida por um loop próprio (persona + contexto), demais tribos como hoje | políticas com justificativa, com `mock` e com Gemini |

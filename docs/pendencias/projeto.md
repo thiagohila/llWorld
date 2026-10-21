@@ -14,7 +14,7 @@ Formato: `- [ ] **título** — detalhe.` · Prioridade: 🔴 alta · 🟡 médi
 
 ## Próxima fase — `worldbox-ai/` (ver `../roadmap.md`)
 
-- [ ] 🔴 **Etapa 0 — decisões de produto** — itens da seção "Decisões de produto" abaixo.
+- [x] 🔴 **Etapa 0 — decisões de produto** — tudo na opção mais simples, tudo no Gemini (2026-10-21; ver seções abaixo).
 - [ ] 🔴 **Etapa 1 — esqueleto do `worldbox-ai/`** — entrypoint com engine + runner + mapa do fork, ponte de import, config, testes offline.
 - [ ] 🟡 **Etapa 2 — reino do Arthur** — fundar o reino, chefe fixo, persona.
 - [ ] 🟡 **Etapa 3 — mente do Arthur** — loop próprio de decisão para a tribo dele; revisar antes o rascunho de design.
@@ -24,25 +24,27 @@ Formato: `- [ ] **título** — detalhe.` · Prioridade: 🔴 alta · 🟡 médi
 
 ## Decisões de arquitetura
 
-- [ ] 🔴 **Estratégia para mudanças no fork** — quando um gancho for inevitável (ex.: líder fixo), patch por fora vs. commit mínimo no submódulo. Definir critério.
-- [ ] 🟡 **Correções do fork (`jogo.md`)** — decidir quais corrigir no fork, quais contornar no `worldbox-ai/` e quais aceitar.
-- [ ] 🟡 **Como o `worldbox-ai/` importa o fork** — `sys.path` no entrypoint, `PYTHONPATH` ou tornar o fork instalável.
-- [ ] 🟡 **Rascunho de design da IA** — revisar `docs/rascunhos/worldbox-ai-design.md`: aprovar, ajustar ou descartar.
+Regra geral (Thiago, 2026-10-21): **tudo na opção mais simples para este início.** Revisitar só quando atrapalhar.
+
+- [x] 🔴 **Estratégia para mudanças no fork** — preferir contornar por fora (patch/subclasse no `worldbox-ai`); gancho mínimo no fork só quando não houver outro jeito. 2026-10-21.
+- [ ] 🟡 **Correções do fork (`jogo.md`)** — decidir caso a caso, quando cada uma atrapalhar a próxima etapa.
+- [x] 🟡 **Como o `worldbox-ai/` importa o fork** — `sys.path` num único ponto do entrypoint. 2026-10-21.
+- [ ] 🟡 **Rascunho de design da IA** — revisar `docs/rascunhos/worldbox-ai-design.md` antes da etapa 3, simplificando para a v1.
 
 ## Decisões de produto (protótipo do Arthur)
 
-Vindas da visão (`llWorld-visao-produto.md`) e do rascunho de design.
+Decididas em 2026-10-21 pela regra "o mais simples" — ver `../roadmap.md`.
 
-- [ ] 🔴 **Origem do reino** — tribo fundada para Arthur no início ou tribo existente que ele assume.
-- [ ] 🔴 **Morte de Arthur** — imortal no protótipo ou sucessão como mecânica.
-- [ ] 🔴 **Divisão e dissolução do reino** — qual grupo continua sendo "o reino" ao dividir (>55) ou dissolver (<4); bloquear?
-- [ ] 🟡 **Arthur e o `--no-ai`** — desligar Arthur junto com as mentes ou mantê-lo independente.
-- [ ] 🟡 **Conhecimento limitado** — raio de contato, atraso de notícias, informações falsas.
-- [ ] 🟡 **Ritmo do mundo vs. conversa** — o mundo pausa, desacelera ou segue enquanto o jogador conversa.
-- [ ] ⚪ **Idioma** — Arthur fala português; prompts internos em inglês ou português.
-- [ ] ⚪ **Modelo de LLM** — hoje as tribos usam Gemini grátis (`gemini-3.1-flash-lite`); decidir se Arthur usa o mesmo, um mais capaz para a conversa, ou `mock` em desenvolvimento.
-- [ ] 🟡 **Orçamento de LLM com Arthur ativo** — Arthur e tribos dividem o mesmo teto grátis (por minuto e por dia); talvez reduzir `max_minds` ou dar prioridade ao Arthur.
-- [ ] 🟡 **UI do chat** — página própria do `worldbox-ai` ou painel no `live.html` do fork.
+- [x] 🔴 **Origem do reino** — um reino fundado para Arthur no início do mundo (mesmo mecanismo do `/found`).
+- [x] 🔴 **Morte de Arthur** — imortal no protótipo; sem sucessão.
+- [x] 🔴 **Divisão e dissolução do reino** — o reino não se divide nem se dissolve.
+- [x] 🟡 **Arthur e o interruptor de LLM** — obedece o mesmo controle das tribos: `--no-ai`, botão **AI**/tecla `M` e `ai off` param o Arthur também.
+- [x] 🟡 **Conhecimento limitado** — fora da v1: Arthur vê o mesmo relatório que a mente da tribo dele receberia.
+- [x] 🟡 **Ritmo do mundo vs. conversa** — o mundo segue no ritmo escolhido; o jogador pausa se quiser.
+- [x] ⚪ **Idioma** — Arthur conversa em português (prompt e resposta); as mentes das tribos continuam como no fork.
+- [x] ⚪ **Modelo de LLM** — tudo no Gemini (`gemini-3.1-flash-lite`, via `.env`); `mock` só para desenvolver e testar.
+- [x] 🟡 **Orçamento de LLM com Arthur ativo** — um teto só, compartilhado entre Arthur e tribos (`MindDirector.call_cap`).
+- [x] 🟡 **UI do chat** — painel de conversa no HUD do jogo, genérico (extensão registrada de fora); conversa, persona, chamadas de LLM e decisões ficam no `worldbox-ai`. Revisado em 2026-10-21 (antes: página própria).
 
 ## Qualidade e processo
 

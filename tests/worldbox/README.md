@@ -13,6 +13,7 @@ for t in tests/worldbox/test_*.py; do .venv/bin/python -I "$t" "$PWD/worldbox" |
 |---|---|
 | `test_ai_minds.py` | mentes com API simulada: chamadas e políticas, teto por tempo real, backoff em 429, parada em 401, rejeição de `{}`, parâmetros OpenAI e reenvio após 400, narrador só com OpenAI |
 | `test_ai_sources.py` | fonte genérica do `.env` (URL, auth, parâmetros), Ollama sem chave, mente `mock` num motor completo sem rede, `LLM_MAX_CALLS_PER_MINUTE` |
+| `test_ai_controls.py` | LLM em tempo real: desligar/ligar (sem chamadas, políticas mantidas, narrador recusado, evento), teto por minuto em runtime vs `.env`, esquecer decisões, preferências sobrevivem ao reset |
 | `test_smite.py` | Smite mata todos no raio na hora, sem contar como morte em guerra |
 
 Regressão da simulação (não é teste unitário): md5 em `docs/worldbox/05-executar-e-testar.md`.
