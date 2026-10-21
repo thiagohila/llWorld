@@ -22,8 +22,9 @@ Fonte única das versões do projeto. Atualize aqui quando algo mudar e registre
 
 | Item | Versão |
 |---|---|
-| Fork `worldbox/` (submódulo) | `4579b3c` (2026-10-07), `git@github.com:thiagohila/worldbox.git`, branch `main` |
-| Docs de referência do fork | descrevem `4579b3c` |
+| Fork `worldbox/` (submódulo) | `bfe84cd` (2026-10-21; 2 commits à frente do upstream), `git@github.com:thiagohila/worldbox.git`, branch `main`; versão do pacote `0.1.0` |
+| Upstream do fork | `https://github.com/ryfcx/worldbox` (remote `upstream` no submódulo) — mesmo commit `4579b3c` em 2026-10-20 |
+| Docs de referência do fork | descrevem `bfe84cd` |
 | `worldbox-ai/` | ainda não existe |
 
 ## Serviços externos (opcionais)

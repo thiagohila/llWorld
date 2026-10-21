@@ -21,6 +21,12 @@
 | `worldbox/05-executar-e-testar.md` | ambiente, comandos, determinismo, regressão |
 | `worldbox/06-extensao-e-armadilhas.md` | onde plugar código sem editar o fork; problemas conhecidos |
 | `worldbox/07-seguranca.md` | chaves/segredos, riscos do servidor local, mitigações |
+| `worldbox/08-performance.md` | custo por dia vs população, gargalos, velocidade real, front-end |
+
+## Pendências (checklists)
+
+- `pendencias/jogo.md` — bugs, riscos e limitações do fork.
+- `pendencias/projeto.md` — decisões, infraestrutura e tarefas do llWorld.
 
 ## Rascunhos
 
@@ -30,5 +36,5 @@
 
 - Marcação de confiança: **[código]** lido no fonte · **[executado]** verificado rodando · **[hipótese]** não verificado.
 - Referências como `arquivo.py:função`, relativas a `worldbox/worldbox/` (o pacote) salvo indicação.
-- A referência descreve o fork no commit **`4579b3c`**. Ao atualizar o submódulo, revisar os docs afetados e atualizar este hash.
+- A referência descreve o fork no commit **`bfe84cd`** (upstream `4579b3c` + HUD/sprites `b10f9fb` + performance `bfe84cd`). Ao atualizar o submódulo, revisar os docs afetados e atualizar este hash.
 - Docs curtos e por tema. Detalhe que só o código responde fica no código; aqui vai o mapa.

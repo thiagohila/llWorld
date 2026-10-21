@@ -10,7 +10,7 @@ Documentação e preparação de ambiente (ajustes no terreno). **Não implement
 
 ## Camadas
 
-- **`worldbox/`** — fork do jogo original, submódulo git (`thiagohila/worldbox`). "O jogo" = sempre este fork. Tratar como terceiros: não editar; se inevitável, mudança mínima e genérica, commitada no submódulo e depois o ponteiro no repo raiz.
+- **`worldbox/`** — fork de `ryfcx/worldbox` (simulador em Python; **não** é o WorldBox – God Simulator comercial), submódulo git (`thiagohila/worldbox`). "O jogo" = sempre este fork. Tratar como terceiros: não editar; se inevitável, mudança mínima e genérica, commitada no submódulo e depois o ponteiro no repo raiz.
 - **`worldbox-ai/`** — camada própria do llWorld (ainda não existe). Usará o jogo só pela superfície pública dele.
 - **`worldbox-clone-backup/`** — cópia não versionada do fork. Não editar nem commitar.
 
@@ -25,6 +25,7 @@ Documentação e preparação de ambiente (ajustes no terreno). **Não implement
 | rodar e testar | `docs/worldbox/05-executar-e-testar.md` |
 | onde plugar código e problemas conhecidos | `docs/worldbox/06-extensao-e-armadilhas.md` |
 | segurança (chaves, servidor local) | `docs/worldbox/07-seguranca.md` |
+| o que falta resolver (checklists) | `docs/pendencias/jogo.md`, `docs/pendencias/projeto.md` |
 | ideias (não aprovadas) para a IA | `docs/rascunhos/` |
 
 Leia sob demanda; não carregue tudo.
@@ -40,6 +41,10 @@ Leia sob demanda; não carregue tudo.
 - Dentro de `worldbox/`: `PYTHONDONTWRITEBYTECODE=1 python -m worldbox.main --no-ai --days 3000 --seed 42`.
 - Mapa ao vivo em `http://127.0.0.1:8765/` (não `localhost`: OrbStack usa a porta).
 - Não há testes automatizados; regressão = md5 com mesmo seed, sem chaves de API no ambiente.
+
+## Regra de remotes do jogo
+
+Mudanças no jogo vão **só para o repo do Thiago** (`origin` = `thiagohila/worldbox`). **Nunca** fazer push, PR, issue ou qualquer envio para o upstream `ryfcx/worldbox` (remote `upstream`), a menos que ele peça explicitamente naquele momento.
 
 ## Convenções
 

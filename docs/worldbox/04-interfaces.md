@@ -21,6 +21,14 @@ Nenhuma interface muda regras: todas leem o motor por `runner.lock`. As únicas 
 
 - **[executado]** Nesta máquina o OrbStack ocupa `*:8765`; `localhost` cai nele. Usar `127.0.0.1`.
 
+### HUD (redesenhado em 2026-10-20, só front-end em `static/live.html`)
+
+- Topo: data/era, chips de status com ícone (população com tendência anual, civs, assentamentos, tecnologias, guerras e doentes com alerta), medidor de comida, play/pause, velocidade, zoom.
+- Esquerda: barra de ícones (camadas e poderes) + gaveta contextual com descrição, raio e formulário de fundação. Prévia do raio no mapa.
+- Direita: abas Inspect / Civs / Minds / Tech / History. Embaixo: log com filtros (Life desligado por padrão), toasts para guerras, pragas, invenções e marcos, minimapa clicável.
+- Sprites em pixel art gerados no navegador: terreno pré-renderizado (8 px por tile, 2 quadros de animação), pessoas 9×11 por profissão/estado, prédios por nível (Camp → City), placas de nome.
+- Atalhos: `Espaço` pausa · `1`–`6` poderes · `N` fundar · `L` alterna camadas · `F` enquadrar · `+`/`-` zoom · `[`/`]` velocidade · `Esc` cancela.
+
 ## Terminal — `cli/terminal.py`, `cli/live.py`
 
 - **[código]** REPL com comandos: `start`, `pause`, `step`, `advance <n>`, `reset`, `seed <n>`, `agent <id>`, `stats`, `tribes`, `tribe <id>`, `tech`, `wars`, `towns`, `chronicle`, `minds`, `narrate`, `export`, `view`, `livemap`, `events`, `help`, `exit`.

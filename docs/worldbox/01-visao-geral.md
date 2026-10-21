@@ -1,5 +1,12 @@
 # worldbox — visão geral
 
+## Origem
+
+- **[executado]** Upstream: `https://github.com/ryfcx/worldbox` (autores `ryfcx`/Ryan, 7 commits entre 2026-08-10 e 2026-10-07, versão `0.1.0` em `worldbox/__init__.py`). Nosso fork `thiagohila/worldbox` partiu do commit `4579b3c` do upstream (conferido com `git ls-remote` em 2026-10-20) e hoje tem 2 commits próprios: `b10f9fb` (HUD e sprites) e `bfe84cd` (performance).
+- **Não é o WorldBox – God Simulator** (jogo comercial do Maxim Karpenko, código fechado, versões 0.5x em 2026). Só compartilha o nome e a ideia de "mundo que evolui"; nenhum código, regra ou asset vem de lá. Diferenças em relação ao WorldBox comercial são esperadas em tudo.
+
+## O que é
+
 Simulador de civilizações em Python puro (stdlib, 3.10+). ~100 pessoas num mapa procedural; tribos, assentamentos, tecnologia, guerras e pragas emergem. Tribos grandes podem ser "jogadas" por LLMs (DeepSeek/OpenAI).
 
 ## Mapa de módulos
