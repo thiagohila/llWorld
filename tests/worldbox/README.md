@@ -18,7 +18,7 @@ for t in tests/worldbox/test_*.py; do .venv/bin/python -I -B "$t" "$PWD/worldbox
 | `test_smite.py` | Smite mata todos no raio na hora, sem contar como morte em guerra |
 | `test_featured.py` | `found_tribe`/`settle_people` (tribo, chefe, acampamento, casas, sem evento), pessoas destacadas no `/state` (posição, cor, rótulo cortado, mortos saem, `unfeature`), botão de fundar do mapa intacto |
 
-Testes do Arthur (`tests/arthur/`) recebem o caminho de `arthur/`: `for t in tests/arthur/test_*.py; do .venv/bin/python -I -B "$t" "$PWD/arthur" | tail -1; done`. `test_server.py` cobre o servidor e o HUD; `test_kingdom.py`, o reino (etapa 2).
+Testes do Arthur (`tests/arthur/`) recebem o caminho de `arthur/`: `for t in tests/arthur/test_*.py; do .venv/bin/python -I -B "$t" "$PWD/arthur" | tail -1; done`. `test_server.py` cobre o servidor e o HUD; `test_kingdom.py`, o reino (etapa 2); `test_council.py`, a mente do rei (etapa 3).
 
 Regressão da simulação (não é teste unitário): md5 em `docs/worldbox/05-executar-e-testar.md`.
 Medições de performance: `tools/perf/` (benchmarks, profiling, memória, envelhecimento, checagem de PNG).

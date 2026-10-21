@@ -77,14 +77,27 @@ class ArthurServer:
                 "cap": usage["cap"],
             },
             "king": self.kingdom.summary() if self.kingdom is not None else {"ok": False},
+            "council": self.council_summary(),
             "gameUrl": self.game_url,
         }
 
+    def council_summary(self) -> Dict[str, Any]:
+        """Arthur's current decision, why, and his recent ones."""
+        if self.kingdom is None:
+            return {"status": "none"}
+        with self.runner.lock:
+            return self.kingdom.council.summary()
+
     def set_llm(self, value: str, target: str = "all") -> Dict[str, Any]:
         """Switch LLM use on/off: ``all`` is the game's master switch (tribes,
-        narrator and Arthur); ``arthur_chat`` is Arthur's own, for the
-        conversation only. The master switch always wins."""
+        narrator and Arthur); ``arthur_chat`` and ``arthur_council`` are
+        Arthur's own, for the conversation or his decisions only. The master
+        switch always wins."""
         choice = (value or "toggle").strip().lower()
+        if target == "arthur_council" and self.kingdom is not None:
+            council = self.kingdom.council
+            council.enabled = (choice == "on") if choice in ("on", "off") else not council.enabled
+            return {"ok": True, "target": target, "enabled": council.enabled}
         if target == "arthur_chat":
             advisor = self.advisor
             advisor.llm_enabled = (choice == "on") if choice in ("on", "off") else not advisor.llm_enabled
@@ -134,6 +147,10 @@ class ArthurServer:
             mind_use = minds.usage_snapshot()
             rows = minds.snapshot(self.engine)
             minds_on = bool(self.engine.config.ai.enabled)
+            council = self.kingdom.council if self.kingdom is not None else None
+            council_use = council.usage_snapshot() if council is not None else {}
+            council_status = council.status() if council is not None else "none"
+            council_house = council.house() if council is not None else {}
         paused, halted = mind_use["paused"], mind_use["halted"]
         usable = available_houses()
         usable_keys = {(s["house"], s["model"]) for s in usable}
@@ -149,6 +166,8 @@ class ArthurServer:
                 users.append(f"mentes de {tribes_by_house[spec['house']]} tribo(s)")
             if narrator_source and (narrator_source["house"], narrator_source["model"]) == (spec["house"], spec["model"]):
                 users.append("narrador")
+            if council_house and (council_house["house"], council_house["model"]) == (spec["house"], spec["model"]):
+                users.append("decisões do Arthur")
             sources.append({
                 "house": spec["house"], "label": spec["label"], "model": spec["model"], "host": host,
                 "configured": (spec["house"], spec["model"]) in usable_keys,
@@ -200,8 +219,17 @@ class ArthurServer:
             },
             {
                 "id": "arthur_council", "name": "Decisões do Arthur", "where": "Arthur",
-                "what": "o rei decide a política do reino",
-                "model": "—", "state": "ainda não existe (etapa 3)", "control": "—", "usage": {},
+                "what": "o rei decide a política do reino; divide o teto por minuto com as tribos",
+                "model": council_house.get("label", "—") if council_house else "—",
+                "state": {
+                    "on": "ligado", "thinking": "ligado (pensando)", "error": "ligado (última chamada falhou)",
+                    "off_own": "desligado (só as decisões)", "off_master": "desligado (interruptor geral)",
+                    "off_no_ai": "desligado (--no-ai)", "halted": "parado: " + (halted or ""),
+                    "no_source": "sem fonte de LLM", "none": "—",
+                }.get(council_status, council_status),
+                "control": "própria",
+                "enabled": bool(council and council.enabled),
+                "usage": council_use,
             },
         ]
         total = {

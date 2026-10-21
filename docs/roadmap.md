@@ -24,6 +24,7 @@ Ainda em aberto no jogo: segurança do servidor local (CSRF, DNS rebinding), det
 - `.venv` com Python 3.14; remotes: `thiagohila/llWorld` e `thiagohila/worldbox` (push para o upstream bloqueado).
 - `arthur/` (Arthur) existe desde a etapa 1: HUD e servidor próprios (porta 8766, com o mapa do jogo num frame), ponte de import, conversa com respostas de teste sem LLM — ver `../arthur/README.md`.
 - Etapa 2: o **reino do Arthur** é fundado no dia zero (`arthur/arthur/kingdom.py`): Arthur Pendragon chefe fixo e imortal, reino que não se divide nem se dissolve, fora das vagas de LLM, com plaquinha dourada no mapa e botão "Onde está o rei?" no HUD do Arthur.
+- Etapa 3: a **mente do Arthur** (`arthur/arthur/council.py`) decide a política do reino — persona + o mesmo relatório que as tribos recebem → política no formato do jogo + justificativa em português; validada pelo jogo (`parse_policy`) e pelas regras do rei (sem tribo desconhecida, sem invenção impossível, sem guerra contra quem está em paz). Aba **Decisões** no HUD do Arthur.
 
 ## Camadas e interfaces
 
@@ -46,7 +47,8 @@ llWorld/
 | Decidir pela tribo do Arthur | subclasse de `ai.minds.MindDirector` atribuída a `engine.minds`; validar com `parse_policy` / `TribePolicy` | **pronto** [código] |
 | Chamar a LLM | `ai.client.chat()` com as fontes do `.env` (DeepSeek, OpenAI, compatível com OpenAI, `mock`); `ChatResult` traz `status`, `fatal`, tokens | **pronto** [código] |
 | Ligar/desligar LLM em jogo | `engine.minds.paused` / `set_paused()`, `set_call_cap()`, `forget_policies()`; HTTP `/control?action=ai` / `ai_cap` / `ai_forget`; botão **AI** e tecla `M` no HUD; `ai on/off/cap/forget` no terminal | **pronto** [código] |
-| Controlar custo | `MindDirector` já limita as tribos; o loop do Arthur **usa o mesmo teto** (`call_cap`, `calls_last_minute`) e **respeita `paused`** | **a fazer** no Arthur |
+| Controlar custo | o conselho do Arthur **usa o mesmo teto** (`call_cap`, `calls_last_minute`; registra as próprias chamadas na mesma janela `minds._recent_calls`), **respeita `paused`**, o cadenciamento das mentes (`think_interval_days`, `min_think_seconds`, pular se nada mudou) e o backoff; erro fatal para todas as mentes (`minds.halted`) | **pronto** [executado] |
+| Decidir pela tribo do Arthur (feito) | em vez de subclasse: `engine.minds.policy_for` envolvido na instância devolve a política do conselho para o reino (sempre o mesmo objeto, que o motor edita); a diplomacia (`toward`) é empurrada pelo próprio conselho, com os mesmos valores diários do jogo; "esquecer decisões" do mapa também apaga a dele | **pronto** [executado] |
 | Fundar o reino | `society.founding.found_tribe` / `settle_people` (extraídos de `LiveState.found_civ`, que agora os usa; comportamento idêntico) | **pronto** [executado] |
 | Arthur fixo como chefe | patch por fora em `society.culture.choose_chieftain` (chamado via módulo), só para o agente marcado `llworld_king` | **pronto** [executado] |
 | Arthur imortal (sem sucessão) | por fora: `KingNeeds` (saúde nunca abaixo de 1, nem na hora do combate), imunidade permanente a todas as doenças, idade fixa; Smite do mapa desvia dele (envolve `LiveState.act`) — nenhuma morte ou abate é contado para ele | **pronto** [executado] |
@@ -80,7 +82,7 @@ Cada etapa é pequena, testável offline com a mente `mock` e não muda a regres
 | 0 ✅ | **Decisões de produto** — tudo no mais simples, tudo no Gemini (ver abaixo) | feito em 2026-10-21 |
 | 1 ✅ | **Esqueleto do Arthur** — `arthur/run.py` (jogo + Arthur), ponte de import, HUD e servidor próprios, conversa com respostas de teste; o fork ganhou, como recurso genérico opcional, painéis de extensão no HUD | feito em 2026-10-21: chat de ponta a ponta no navegador, `tests/arthur/test_server.py` passa, md5 intacto |
 | 2 ✅ | **Reino do Arthur** — fundar o reino no início, Arthur chefe fixo, imortal, reino sem dividir; persona aplicada aos traços dele; **visível no mapa** (sprite de rei + plaquinha "Arthur", via "personagem destacado" genérico no fork) e botão "onde está o rei?" no HUD do Arthur | feito em 2026-10-21: `tests/arthur/test_kingdom.py` (anos de jogo, fome, ferimento, doença, Smite, colonos, divisão, vagas de LLM, reset), md5 intacto; visto no navegador |
-| 3 | **Mente do Arthur** — a tribo dele decidida por um loop próprio (persona + contexto), demais tribos como hoje | políticas com justificativa, com `mock` e com Gemini |
+| 3 ✅ | **Mente do Arthur** — a tribo dele decidida por um loop próprio (persona + contexto), demais tribos como hoje | feito em 2026-10-21: `tests/arthur/test_council.py` (API simulada) e rodada com `mock`; com Gemini, decisão real recebida e aplicada (após alguns 503 de sobrecarga, absorvidos pela espera) |
 | 4 | **Chat do conselheiro** — rota + UI; conselho vira item de agenda do próximo conselho | Arthur responde em personagem; pode recusar; o chat não muda o mundo diretamente |
 | 5 | **Memória, confiança, conhecimento limitado** | conselhos e consequências lembrados; Arthur não sabe o que não viu |
 | 6 | **Avaliação** pelos critérios da visão §11 | cenários roteirizados passam |

@@ -22,6 +22,7 @@ arthur/
     bridge.py           único ponto que importa o fork (põe ../worldbox no sys.path)
     persona.py          quem é o Arthur (nome, reino, idade, traços)
     kingdom.py          o reino no mundo: fundação, regras do rei, marca no mapa
+    council.py          a mente do rei: decide a política do reino com a LLM
     advisor.py          a conversa com o rei
     server.py           servidor do Arthur: página + /api protegida
     static/index.html   HUD do Arthur
@@ -56,6 +57,7 @@ python arthur/run.py --no-open --port 8765 --arthur-port 8766
 
 - **O rei:** nome, reino e sede, povo, anos de reinado e saúde; botão **Onde está o rei?** centraliza o mapa nele (por `postMessage`, já que o mapa é outra origem).
 - **Conversa:** o chat com o rei.
+- **Decisões:** a decisão atual do rei (postura, frase dele, justificativa, diplomacia, vetos) e as anteriores, com o motivo de cada uma (primeira decisão, intervalo, guerra mudou, celeiro baixo).
 - **LLMs:** mapa de quais LLMs existem, para que servem e quanto consomem; interruptor geral, interruptor próprio da conversa do Arthur e teto por minuto. Atualiza a cada 2 s com a aba aberta.
 - O botão "LLM" no topo do painel é o interruptor geral, o mesmo do botão AI do mapa do jogo.
 
@@ -74,7 +76,16 @@ python arthur/run.py --no-open --port 8765 --arthur-port 8766
 - **No mapa** — anel dourado, plaquinha "Arthur" com coroa e ponto no minimapa (recurso genérico do jogo, `LiveState.feature`).
 - **Reset do mundo** refunda o reino.
 
-O rei ainda não pensa nem conversa de verdade: isso chega nas etapas 3–4.
+**Etapa 3 — a mente do rei** (`council.py`): o reino é decidido pelo Arthur, não pelas mentes do jogo.
+
+- **O que ele lê:** a persona (temperamento, objetivos, linhas vermelhas, voz) no prompt de sistema e o mesmo relatório que qualquer tribo recebe (`_brief_tribe` do jogo: povo, fome, celeiro, profissões, tecnologias, vizinhos e relações, materiais), mais a última decisão dele. v1: sem conhecimento limitado.
+- **O que ele devolve:** `{"policy": {...formato do jogo...}, "rationale": "..."}` — a frase (`intent`) em inglês, porque vai para o log do jogo; a justificativa em português, para o HUD. Também aceita a política "solta" (formato do `mock`).
+- **Validação:** a do jogo (`parse_policy`), mais a do Arthur: descarta tribo desconhecida ou ele mesmo, descarta invenção que o terreno não sustenta, e a **linha vermelha** — nada de guerra contra quem não está em guerra conosco e tem relação ≥ 0; um `raid` sem inimigo vira `defend`. Resposta vazia ou inválida mantém a política anterior e espera mais (backoff).
+- **Quando pensa:** no primeiro dia; depois a cada 40 dias de jogo (o mesmo intervalo das tribos, no mínimo 20 s reais entre chamadas, pulando se nada mudou); antes disso se uma guerra começa ou termina ou se o celeiro cai abaixo de 25% (de novo só depois de voltar acima de 40%), com no mínimo 10 dias entre pensamentos antecipados.
+- **Custo:** mesmo interruptor geral e mesmo teto por minuto das tribos; interruptor próprio ("Decisões do Arthur") na aba LLMs; consumo separado lá. Fonte: a do `.env` (Gemini). `--no-ai` desliga ele também.
+- **Como chega ao mundo:** o motor lê a política dele por `engine.minds.policy_for`; a diplomacia é empurrada pelo próprio conselho, todo dia, nos mesmos valores das tribos. Ele não ocupa vaga de LLM das tribos (no HUD do jogo, o contador geral de "mentes" passa a incluir o reino, porque lê por `policy_for`).
+
+O rei ainda não conversa de verdade: isso é a etapa 4.
 
 ## Testes
 
@@ -82,4 +93,4 @@ O rei ainda não pensa nem conversa de verdade: isso chega nas etapas 3–4.
 for t in tests/arthur/test_*.py; do .venv/bin/python -I -B "$t" "$PWD/arthur" | tail -1; done
 ```
 
-`test_kingdom.py` cobre o reino: fundação no dia zero, mesma seed → mesmo lugar, anos de jogo, fome, ferimento, doença, Smite, colonos, divisão, vagas de LLM e reset. `test_server.py` sobe os dois servidores em portas de teste e cobre token, `Host`, `Origin` (inclusive a do mapa do jogo), tamanho do corpo, ida e volta da mensagem, interruptor de LLM compartilhado e o jogo intacto na própria porta.
+`test_council.py` cobre a mente (API simulada, sem rede): primeira decisão, cadência, teto compartilhado, interruptores, gatilho de guerra, linha vermelha, respostas inválidas, formato do `mock`, "esquecer", erro fatal, resposta velha descartada após reset, `--no-ai`. `test_kingdom.py` cobre o reino: fundação no dia zero, mesma seed → mesmo lugar, anos de jogo, fome, ferimento, doença, Smite, colonos, divisão, vagas de LLM e reset. `test_server.py` sobe os dois servidores em portas de teste e cobre token, `Host`, `Origin` (inclusive a do mapa do jogo), tamanho do corpo, ida e volta da mensagem, interruptor de LLM compartilhado e o jogo intacto na própria porta.

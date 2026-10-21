@@ -41,6 +41,15 @@ header p{margin:2px 0 0;color:var(--ink3);font-size:11.5px}
 #king .who div{font-family:var(--mono);font-size:10.5px;color:var(--ink2)}
 #findKing{font-family:var(--mono);font-size:11px;background:var(--gold2);border-color:#6A5420;color:var(--gold);white-space:nowrap}
 #findKing:disabled{opacity:.45;cursor:default}
+#kDecision{color:var(--ink)!important}
+#council{overflow-y:auto;padding:12px 16px 16px;gap:10px}
+.dec .top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stance{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;border:1px solid #6A5420;color:var(--gold);border-radius:3px;padding:1px 6px}
+.dec .when{font-family:var(--mono);font-size:10px;color:var(--ink3)}
+.dec .intent{color:var(--ink);margin:6px 0 3px;font-size:12.5px}
+.dec .why{color:var(--ink2);font-size:12px;line-height:1.5}
+.dec .veto{color:var(--warn);font-family:var(--mono);font-size:10.5px;margin-top:4px}
+.dec.past{opacity:.82}
 #llm{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10.5px;color:var(--ink2)}
 #llmBtn{font-family:var(--mono);font-size:11px;letter-spacing:.06em;background:rgba(134,188,255,.10);border-color:#2F4A6E;color:var(--mind)}
 #llmBtn.off{background:var(--panel2);border-color:var(--line);color:var(--ink3);text-decoration:line-through}
@@ -115,7 +124,7 @@ form button{background:var(--gold2);border-color:#6A5420;color:var(--gold);font-
       <div class="stat wide"><span>Era</span><b id="sEra">–</b></div>
     </section>
     <section id="king" aria-label="O rei">
-      <div class="who"><b id="kName">–</b><div id="kRealm">–</div><div id="kInfo">–</div></div>
+      <div class="who"><b id="kName">–</b><div id="kRealm">–</div><div id="kInfo">–</div><div id="kDecision"></div></div>
       <button id="findKing" type="button" disabled title="Centraliza o mapa no rei">Onde está o rei?</button>
     </section>
     <section id="llm">
@@ -124,6 +133,7 @@ form button{background:var(--gold2);border-color:#6A5420;color:var(--gold);font-
     </section>
     <nav class="tabs" role="tablist">
       <button class="tab on" data-pane="chat" role="tab">Conversa</button>
+      <button class="tab" data-pane="council" role="tab">Decisões</button>
       <button class="tab" data-pane="llms" role="tab">LLMs</button>
     </nav>
     <section id="chat" class="pane on" aria-label="Conversa com o rei">
@@ -131,6 +141,7 @@ form button{background:var(--gold2);border-color:#6A5420;color:var(--gold);font-
       <form id="form"><input id="input" maxlength="600" placeholder="Aconselhe o rei…" autocomplete="off" aria-label="Mensagem para o rei">
         <button type="submit">Enviar</button></form>
     </section>
+    <section id="council" class="pane" aria-label="Decisões do rei"><div class="note">Carregando…</div></section>
     <section id="llms" class="pane" aria-label="Uso de LLM"><div class="note">Carregando…</div></section>
   </aside>
 </div>
@@ -150,7 +161,7 @@ function fmtDay(d){return "A"+Math.floor(d/365)+" · d"+(d%365)}
 function pollState(){api("/api/state").then(function(s){if(!s.ok)return;var w=s.world,l=s.llm;
   $("sYear").textContent=w.year;$("sPop").textContent=w.population.toLocaleString("pt-BR");
   $("sTribes").textContent=w.tribes;$("sEra").textContent=w.era||"–";
-  renderKing(s.king);
+  renderKing(s.king);renderCouncil(s.council||{});
   paused=l.paused;var b=$("llmBtn");
   b.textContent=!l.available?"LLM —":(l.paused?"LLM off":"LLM on");b.classList.toggle("off",l.paused);b.classList.toggle("none",!l.available);
   $("llmInfo").innerHTML=!l.available?"Nenhuma fonte de LLM ativa (.env ou --no-ai).":
@@ -165,6 +176,37 @@ function renderKing(k){king=k&&k.ok?k:null;$("findKing").disabled=!king;
   $("kInfo").textContent=king.people+" pessoas · reina há "+king.years.toLocaleString("pt-BR")+" anos · saúde "+king.health+
     (king.ill?" · doente":"")+(king.chief?"":" · sem a chefia!");
 }
+/* ---- the king's decisions (his council) ---- */
+var STANCE={survive:"sobreviver",farm:"plantar",expand:"expandir",defend:"defender",research:"pesquisar",raid:"atacar",trade:"comerciar"};
+var ACTION={war:"guerra",peace:"paz",trade:"comércio",ignore:"ignorar"};
+var CSTATUS={on:"ligado",thinking:"pensando…",error:"última chamada falhou",off_own:"desligado (só as decisões)",
+  off_master:"desligado (interruptor geral)",off_no_ai:"desligado (--no-ai)",halted:"parado",no_source:"sem fonte de LLM",none:"—"};
+var councilKey="";
+function decCard(d,past){
+  var t=(d.toward||[]).map(function(x){return "tribo "+x.id+": "+(ACTION[x.action]||x.action)}).join(" · ");
+  return '<div class="card dec'+(past?" past":"")+'"><div class="top"><span class="stance">'+esc(STANCE[d.stance]||d.stance)+'</span>'+
+    '<span class="when">'+fmtDay(d.day)+(d.reason&&d.reason!=="interval"?" · "+esc({"no policy":"primeira decisão","war changed":"guerra mudou","granary low":"celeiro baixo"}[d.reason]||d.reason):"")+'</span></div>'+
+    (d.intent?'<div class="intent">“'+esc(d.intent)+'”</div>':'')+
+    '<div class="why">'+esc(d.rationale||"")+'</div>'+
+    (t?'<div class="note">'+esc(t)+'</div>':'')+
+    ((d.vetoes||[]).length?'<div class="veto">vetado pelas regras do rei: '+esc(d.vetoes.join("; "))+'</div>':'')+
+    '<div class="note">'+esc(d.model||"")+'</div></div>';
+}
+function renderCouncil(c){
+  var p=c.policy;
+  $("kDecision").textContent=p?"Decisão: "+(STANCE[p.stance]||p.stance)+(p.intent?" — “"+p.intent+"”":""):(c.status==="thinking"?"Pensando na primeira decisão…":"");
+  var key=JSON.stringify([c.status,c.error,(c.log||[]).length&&c.log[0].day,(c.log||[]).length]);
+  if(key===councilKey)return;councilKey=key;
+  var h='<div class="kv"><span>estado</span><span class="state '+(c.status==="on"||c.status==="thinking"?"on":c.status==="halted"||c.status==="error"?"bad":"off")+'">'+esc(CSTATUS[c.status]||c.status)+'</span></div>'+
+    '<div class="kv"><span>modelo</span><span>'+esc(c.model||"—")+'</span></div>'+
+    (c.error?'<div class="veto">'+esc(c.error)+'</div>':'')+
+    '<div class="note">O rei decide a política do reino: profissões, postura, diplomacia e invenções. Pensa a cada 40 dias de jogo, ou antes se uma guerra começa ou termina, ou se o celeiro fica baixo. Recusa guerra contra quem está em paz com o reino.</div>';
+  var log=c.log||[];
+  h+=log.length?'<div class="sec">Agora</div>'+decCard(log[0],false):'<div class="note">Ainda nenhuma decisão.</div>';
+  if(log.length>1)h+='<div class="sec">Antes</div>'+log.slice(1).map(function(d){return decCard(d,true)}).join("");
+  $("council").innerHTML=h;
+}
+
 /* The map is another origin (the game's port), so it is asked by message;
    it only knows how to centre on a person it marks itself. */
 $("findKing").addEventListener("click",function(){if(!king)return;

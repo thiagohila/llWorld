@@ -13,8 +13,9 @@ outside, without editing the game:
 * **One realm** -- ``GroupRegistry.try_split`` and ``find_unviable`` skip the
   kingdom, so it never splinters or disbands. If everyone but the king dies,
   a few settlers come to him.
-* **Out of the LLM minds** -- the tribe follows the plain rules until
-  Arthur's own mind arrives (stage 3), and does not take one of the slots.
+* **Arthur's own mind** -- the realm takes no slot of the game's LLM minds;
+  its policy comes from Arthur's council (``council.py``), handed to the
+  engine through ``engine.minds.policy_for``.
 
 The patches act only on objects marked with ``REALM``/``KING``, so a world
 reset (new registry, ids starting over) cannot protect the wrong tribe.
@@ -27,6 +28,7 @@ import random
 from typing import Any, Dict, List, Optional, Tuple
 
 from .bridge import DISEASES, EventKind, GroupRegistry, Needs, culture, found_tribe, settle_people
+from .council import Council
 from .persona import ARTHUR
 
 REALM = "llworld_realm"  # set on the kingdom's Group
@@ -113,6 +115,7 @@ class Kingdom:
         self.group: Optional[Any] = None
         self.age_days = 0
         self.crowned_day = 0
+        self.council = Council(engine, runner, persona)
         self._hook_engine()
         self._hook_powers()
         self.found()
@@ -193,6 +196,7 @@ class Kingdom:
                     self.live_state.unfeature(self.king.id)
                 self.live_state.feature(king.id, persona["name"], "king")
             self.king, self.group = king, group
+            self.council.reset(group)
 
     # -- keeping it -------------------------------------------------------------
 
@@ -213,6 +217,7 @@ class Kingdom:
                 f"{SETTLERS} settlers came to {king.name}'s side; the {group.name} lives on",
                 agent_id=king.id,
             )
+        self.council.tick(engine.clock.day)
 
     def _hook_engine(self) -> None:
         engine = self.engine
@@ -239,9 +244,23 @@ class Kingdom:
                 group for group in tribes if group.size >= minds.config.min_tribe_size
             ][: minds.mind_slots()]
 
+        policy_for, forget_policies = minds.policy_for, minds.forget_policies
+
+        def policy_with_the_kings(group_id):
+            # The same object every time: the engine edits it in place (a
+            # finished invention is cleared from it).
+            if self.group is not None and group_id == self.group.id:
+                return self.council.policy
+            return policy_for(group_id)
+
+        def forget_all():
+            return forget_policies() + (1 if self.council.forget() else 0)
+
         engine.step = step_with_upkeep
         engine.reset = reset_and_refound
         minds._eligible = eligible
+        minds.policy_for = policy_with_the_kings
+        minds.forget_policies = forget_all
 
     def _hook_powers(self) -> None:
         """Smite from the map spares the king: he is set aside while it falls."""

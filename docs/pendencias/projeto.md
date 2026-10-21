@@ -17,7 +17,9 @@ Formato: `- [ ] **título** — detalhe.` · Prioridade: 🔴 alta · 🟡 médi
 - [x] 🔴 **Etapa 0 — decisões de produto** — tudo na opção mais simples, tudo no Gemini (2026-10-21; ver seções abaixo).
 - [x] 🔴 **Etapa 1 — esqueleto do Arthur** — `arthur/run.py` (jogo + Arthur no mesmo processo), `arthur/arthur/bridge.py`, HUD e servidor próprios (`server.py`, `static/index.html`), conversa com respostas de teste. No fork, painéis de extensão genéricos (opcionais, não usados pelo Arthur). 2026-10-21.
 - [x] 🟡 **Etapa 2 — reino do Arthur** — reino fundado no dia zero, Arthur chefe fixo e imortal (imune a Smite e doenças), reino sem dividir nem dissolver (colonos se ficar sozinho), fora das vagas de LLM, traços da persona (`arthur/arthur/persona.py`), plaquinha no mapa e "Onde está o rei?". 2026-10-21.
-- [ ] 🟡 **Etapa 3 — mente do Arthur** — loop próprio de decisão para a tribo dele; revisar antes o rascunho de design.
+- [x] 🟡 **Etapa 3 — mente do Arthur** — `arthur/arthur/council.py`: política + justificativa, validada; mesmo interruptor e teto das tribos, interruptor próprio na aba LLMs; aba Decisões. 2026-10-21.
+- [x] 🟡 **Ver uma decisão real do Gemini** — depois de alguns 503 (sobrecarga), a primeira decisão real chegou no formato certo: `farm`, frase em inglês, justificativa em português coerente com o relatório. 2026-10-21.
+- [ ] ⚪ **Espera após erro passageiro** — como nas tribos, uma falha faz o rei esperar 40 dias de jogo (dobrando a cada falha). Um 503 logo no início deixa o reino nas regras normais por esse tempo. Talvez esperar menos em erro passageiro (503/429) do que em resposta inválida.
 - [ ] 🟡 **Etapa 4 — chat do conselheiro** — rota segura + UI; conselho vira agenda, nunca muda o mundo direto.
 - [ ] ⚪ **Etapa 5 — memória, confiança, conhecimento limitado.**
 - [ ] ⚪ **Etapa 6 — avaliação pelos critérios da visão §11.**

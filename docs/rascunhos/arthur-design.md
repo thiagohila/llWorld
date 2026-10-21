@@ -2,6 +2,8 @@
 
 > **Status: rascunho, não aprovado.** Escrito em 2026-10-20 como ideia antecipada; revisar com o Thiago antes da etapa 3 do `../roadmap.md`. Não usar como especificação sem essa revisão.
 >
+> **Etapa 3 feita (2026-10-21), versão mínima:** só o loop de conselho, sem memória/agenda/confiança e sem filtro de conhecimento (decisão da v1). Em vez de `CouncilDirector(MindDirector)`, o Arthur envolve `engine.minds.policy_for` na instância e empurra a própria diplomacia — ver `../../arthur/README.md`. Cadência: 40 dias + gatilhos (guerra, celeiro baixo, sem política). Linha vermelha checada por regra. `intent` em inglês, `rationale` em português.
+>
 > **Mudou desde então (2026-10-21):** o backoff após falha já existe no fork; `chat()` aceita qualquer fonte compatível com OpenAI e a mente `mock` (desenvolvimento sem custo); `MindDirector` expõe uso e teto por minuto; o contrato atualizado de interfaces está no `../roadmap.md` (ele prevalece sobre a seção 3 abaixo).
 
 Design da camada de IA do llWorld para o protótipo "conselheiro do Rei Arthur". Define **o que a LLM vê, de onde isso vem, o que ela pode devolver e como o jogo valida e aplica**. Não é código; é o contrato que o código do `arthur/` vai seguir.

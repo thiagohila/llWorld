@@ -7,7 +7,7 @@ Princípio: **a simulação manda nas regras do mundo; a LLM propõe decisões d
 ## Fase atual (2026-10-21)
 
 - **Concluída — o jogo:** o fork roda como veio, com melhorias (HUD e arte nova, −27–33% de custo por dia, poderes com feedback, Smite corrigido, mentes de LLM com controle de custo e fontes grátis — Gemini testado de verdade).
-- **Próxima — o projeto:** implementar o `arthur/` (conselheiro do Rei Arthur) e ajustar as camadas/interfaces entre ele e o jogo. Plano por etapas em `docs/roadmap.md`. Etapas 0 (decisões: **tudo no mais simples, tudo no Gemini**), 1 (esqueleto + chat de ponta a ponta, sem LLM) e 2 (reino do Arthur: chefe fixo e imortal, no mapa) feitas. Próxima: etapa 3 (mente do Arthur).
+- **Próxima — o projeto:** implementar o `arthur/` (conselheiro do Rei Arthur) e ajustar as camadas/interfaces entre ele e o jogo. Plano por etapas em `docs/roadmap.md`. Etapas 0 (decisões: **tudo no mais simples, tudo no Gemini**), 1 (esqueleto + chat de ponta a ponta, sem LLM) 2 (reino do Arthur: chefe fixo e imortal, no mapa) e 3 (mente do Arthur: decide a política do reino, `arthur/arthur/council.py`) feitas. Próxima: etapa 4 (chat do conselheiro).
 - LLM controlável em jogo: botão **AI**/tecla `M`, `/control?action=ai…`, `ai on|off|cap|forget` no terminal. O Arthur deve obedecer o mesmo interruptor e teto.
 - Trabalhar em etapas pequenas e testáveis, combinadas com o Thiago antes de começar cada uma. Decisões de produto são dele.
 
