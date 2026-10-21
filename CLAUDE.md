@@ -45,6 +45,7 @@ Leia sob demanda; não carregue tudo.
 ## Regra de remotes do jogo
 
 Mudanças no jogo vão **só para o repo do Thiago** (`origin` = `thiagohila/worldbox`). **Nunca** fazer push, PR, issue ou qualquer envio para o upstream `ryfcx/worldbox` (remote `upstream`), a menos que ele peça explicitamente naquele momento.
+Reforçado no git do submódulo: `upstream` tem push URL `DISABLED` (fetch continua funcionando). Não desfazer.
 
 ## Convenções
 
