@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arthur</title>
+<style>
+:root{
+  --bg:#06090A; --panel:#0E1513; --panel2:#16201C; --panel3:#1D2924; --line:#26332D; --line2:#33443B;
+  --ink:#ECF1EA; --ink2:#A3AEA4; --ink3:#6E7A71;
+  --accent:#6FD3C4; --accent2:#0F3A36; --gold:#E8BC52; --gold2:#3A2E12; --mind:#86BCFF; --bad:#EE7655; --warn:#E8BC52;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --ui:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:13px;-webkit-font-smoothing:antialiased}
+button{font-family:var(--ui);font-size:12px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:6px 11px;cursor:pointer}
+button:hover{background:var(--panel3);border-color:var(--line2)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input{font-family:var(--ui);font-size:13px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:9px 10px;min-width:0}
+
+#app{display:flex;height:100vh}
+#game{flex:1;position:relative;min-width:0;border-right:1px solid var(--line)}
+#game iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg)}
+#gameDown{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:var(--ink3);text-align:center;padding:24px}
+#arthur{width:400px;flex:none;display:flex;flex-direction:column;background:linear-gradient(180deg,#121A17,#0B110F)}
+
+header{padding:14px 16px 12px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.crest{width:34px;height:34px;flex:none;border-radius:8px;background:var(--gold2);border:1px solid #6A5420;display:grid;place-items:center}
+.crest svg{width:20px;height:20px}
+header h1{margin:0;font-size:16px;letter-spacing:.2em;text-transform:uppercase}
+header p{margin:2px 0 0;color:var(--ink3);font-size:11.5px}
+
+#status{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.stat{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:7px 9px}
+.stat b{display:block;font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums}
+.stat span{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.stat.wide{grid-column:span 3;display:flex;justify-content:space-between;align-items:baseline}
+.stat.wide b{font-size:13px;color:var(--gold)}
+
+#llm{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10.5px;color:var(--ink2)}
+#llmBtn{font-family:var(--mono);font-size:11px;letter-spacing:.06em;background:rgba(134,188,255,.10);border-color:#2F4A6E;color:var(--mind)}
+#llmBtn.off{background:var(--panel2);border-color:var(--line);color:var(--ink3);text-decoration:line-through}
+#llmBtn.none{opacity:.45}
+#llmInfo{flex:1;line-height:1.4}
+
+.tabs{display:flex;gap:2px;padding:6px 12px 0;border-bottom:1px solid var(--line)}
+.tab{border:none;background:none;border-radius:5px 5px 0 0;padding:8px 12px 9px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink3);border-bottom:2px solid transparent}
+.tab:hover{background:var(--panel2);color:var(--ink2)}
+.tab.on{color:var(--gold);border-bottom-color:var(--gold)}
+.pane{display:none;flex:1;min-height:0}
+.pane.on{display:flex;flex-direction:column}
+#llms{overflow-y:auto;padding:12px 16px 16px;gap:12px}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:10px 12px}
+.sec{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink3);margin:4px 0 -4px}
+.tot{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.tot div b{display:block;font-family:var(--mono);font-size:15px;font-variant-numeric:tabular-nums}
+.tot div span{font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3)}
+.ctl{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:9px;font-family:var(--mono);font-size:10.5px;color:var(--ink2)}
+.ctl button{padding:3px 9px;font-family:var(--mono);font-size:10.5px}
+.note{font-size:11px;color:var(--ink3);margin-top:7px;line-height:1.45}
+table{width:100%;border-collapse:collapse;font-size:11.5px}
+th{text-align:left;font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);font-weight:400;padding:0 6px 5px 0}
+td{padding:5px 6px 5px 0;border-top:1px solid var(--line);vertical-align:top;color:var(--ink2)}
+td b{color:var(--ink);font-weight:600}
+.ok{color:#6DCB8E}.no{color:var(--ink3)}
+.purpose .head{display:flex;align-items:center;gap:8px}
+.purpose .head b{font-size:13px}
+.where{font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--line2);border-radius:3px;padding:0 5px;color:var(--ink2)}
+.where.arthur{color:var(--gold);border-color:#6A5420}
+.purpose .what{color:var(--ink2);font-size:12px;margin:4px 0 6px}
+.kv{display:flex;justify-content:space-between;gap:8px;font-family:var(--mono);font-size:11px;padding:1px 0}
+.kv span:first-child{color:var(--ink3)}
+.state.on{color:#6DCB8E}.state.off{color:var(--warn)}.state.na{color:var(--ink3)}.state.bad{color:var(--bad)}
+.usage{font-family:var(--mono);font-size:10.5px;color:var(--ink2);margin-top:5px}
+
+#chat.pane:not(.on){display:none}
+#log{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:9px}
+.msg{max-width:90%;padding:8px 11px;border-radius:9px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word;font-size:13px}
+.msg .who{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink3);margin-bottom:3px}
+.msg.player{align-self:flex-end;background:var(--accent2);border:1px solid #1F5A54}
+.msg.character{align-self:flex-start;background:var(--panel2);border:1px solid #6A5420}
+.msg.character .who{color:var(--gold)}
+.msg.system{align-self:center;background:none;color:var(--ink3);font-style:italic;font-size:11.5px;text-align:center;max-width:100%}
+.msg.pending{opacity:.6}
+form{display:flex;gap:8px;padding:12px 16px 16px;border-top:1px solid var(--line)}
+form input{flex:1}
+form button{background:var(--gold2);border-color:#6A5420;color:var(--gold);font-weight:600}
+
+@media (max-width:900px){
+  #app{flex-direction:column;height:auto;min-height:100vh}
+  #game{height:55vh;flex:none;border-right:0;border-bottom:1px solid var(--line)}
+  #arthur{width:100%;min-height:45vh}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style></head><body>
+<div id="app">
+  <main id="game">
+    <iframe id="gameFrame" src="__GAME_URL__" title="Mapa do jogo"></iframe>
+    <div id="gameDown">O mapa do jogo não respondeu. Verifique se o processo do Arthur está rodando.</div>
+  </main>
+  <aside id="arthur">
+    <header>
+      <div class="crest" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="M2 15 L3 6 L7 10 L10 4 L13 10 L17 6 L18 15 Z" fill="#E8BC52"/><rect x="2" y="16" width="16" height="2" fill="#E8BC52"/></svg></div>
+      <div><h1>Arthur</h1><p>Você é conselheiro do rei. Ele ouve, mas decide sozinho.</p></div>
+    </header>
+    <section id="status" aria-label="Estado do mundo">
+      <div class="stat"><b id="sYear">–</b><span>Ano</span></div>
+      <div class="stat"><b id="sPop">–</b><span>População</span></div>
+      <div class="stat"><b id="sTribes">–</b><span>Tribos</span></div>
+      <div class="stat wide"><span>Era</span><b id="sEra">–</b></div>
+    </section>
+    <section id="llm">
+      <button id="llmBtn" type="button" title="Liga/desliga as chamadas de LLM — do Arthur e das tribos">LLM</button>
+      <div id="llmInfo">–</div>
+    </section>
+    <nav class="tabs" role="tablist">
+      <button class="tab on" data-pane="chat" role="tab">Conversa</button>
+      <button class="tab" data-pane="llms" role="tab">LLMs</button>
+    </nav>
+    <section id="chat" class="pane on" aria-label="Conversa com o rei">
+      <div id="log" role="log" aria-live="polite"></div>
+      <form id="form"><input id="input" maxlength="600" placeholder="Aconselhe o rei…" autocomplete="off" aria-label="Mensagem para o rei">
+        <button type="submit">Enviar</button></form>
+    </section>
+    <section id="llms" class="pane" aria-label="Uso de LLM"><div class="note">Carregando…</div></section>
+  </aside>
+</div>
+<script>
+(function(){
+"use strict";
+var TOKEN="__ARTHUR_TOKEN__",since=-1,seen={},paused=false;
+function $(id){return document.getElementById(id)}
+function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
+function api(path,body){
+  var opt={headers:{"X-Arthur-Token":TOKEN}};
+  if(body!==undefined){opt.method="POST";opt.headers["Content-Type"]="application/json";opt.body=JSON.stringify(body)}
+  return fetch(path,opt).then(function(r){return r.json()});
+}
+function fmtDay(d){return "A"+Math.floor(d/365)+" · d"+(d%365)}
+
+function pollState(){api("/api/state").then(function(s){if(!s.ok)return;var w=s.world,l=s.llm;
+  $("sYear").textContent=w.year;$("sPop").textContent=w.population.toLocaleString("pt-BR");
+  $("sTribes").textContent=w.tribes;$("sEra").textContent=w.era||"–";
+  paused=l.paused;var b=$("llmBtn");
+  b.textContent=!l.available?"LLM —":(l.paused?"LLM off":"LLM on");b.classList.toggle("off",l.paused);b.classList.toggle("none",!l.available);
+  $("llmInfo").innerHTML=!l.available?"Nenhuma fonte de LLM ativa (.env ou --no-ai).":
+    (l.halted?'<span style="color:var(--bad)">Parado: '+esc(l.halted)+'</span>':
+    (l.paused?"Chamadas desligadas: o rei e as tribos não pensam com LLM.":"chamadas "+l.calls+" · "+l.perMinute+"/"+l.cap+" por minuto"));
+}).catch(function(){})}
+
+function pollMessages(){return api("/api/messages?since="+since).then(function(d){if(!d||!d.ok)return;
+  var log=$("log"),stick=log.scrollTop+log.clientHeight>=log.scrollHeight-24,fresh=false;
+  (d.messages||[]).forEach(function(m){var el=seen[m.id];
+    if(!el){el=document.createElement("div");seen[m.id]=el;log.appendChild(el);fresh=true}
+    el.className="msg "+(m.role||"system")+(m.pending?" pending":"");
+    el.innerHTML=(m.role!=="system"&&m.name?'<span class="who">'+esc(m.name)+(m.day!=null?" · "+fmtDay(m.day):"")+"</span>":"")+esc(m.text||(m.pending?"…":""));
+    if(!m.pending&&m.id>since)since=m.id;
+  });
+  if(stick||fresh)log.scrollTop=log.scrollHeight;
+}).catch(function(){})}
+
+$("form").addEventListener("submit",function(e){e.preventDefault();
+  var inp=$("input"),text=inp.value.trim();if(!text)return;inp.value="";
+  api("/api/send",{text:text}).then(function(d){if(d&&d.ok===false){var el=document.createElement("div");
+    el.className="msg system";el.textContent=d.error||"Não enviado.";$("log").appendChild(el)}pollMessages()})});
+$("llmBtn").addEventListener("click",function(){api("/api/llm",{value:"toggle"}).then(function(){pollState();pollLLMs()})});
+
+/* ---- tabs ---- */
+var pane="chat";
+document.querySelectorAll(".tab").forEach(function(t){t.addEventListener("click",function(){
+  pane=t.dataset.pane;
+  document.querySelectorAll(".tab").forEach(function(o){o.classList.toggle("on",o===t)});
+  document.querySelectorAll(".pane").forEach(function(p){p.classList.toggle("on",p.id===pane)});
+  if(pane==="llms")pollLLMs();})});
+
+/* ---- LLMs: which sources, for what, how much, and the switches ---- */
+function n(x){return (x||0).toLocaleString("pt-BR")}
+function stateClass(s){return /^ligado/.test(s)?"on":/^parado/.test(s)?"bad":/desligado/.test(s)?"off":"na"}
+function renderLLMs(r){
+  var m=r.master,t=r.total,h="";
+  h+='<div class="card"><div class="tot">'+
+     '<div><b>'+n(t.calls)+'</b><span>chamadas</span></div>'+
+     '<div><b>'+n(t.tokens_in+t.tokens_out)+'</b><span>tokens</span></div>'+
+     '<div><b>'+n(t.failures)+'</b><span>falhas</span></div></div>'+
+     '<div class="note">Tokens: '+n(t.tokens_in)+' de entrada, '+n(t.tokens_out)+' de saída. Soma de todos os propósitos desde que o jogo abriu.</div>'+
+     '<div class="ctl"><button data-llm="all" data-v="'+(m.paused?"on":"off")+'">'+(m.paused?"Ligar tudo":"Desligar tudo")+'</button>'+
+     '<span>teto</span><button data-cap="-1">−</button><b style="color:var(--ink)">'+m.cap+'</b><button data-cap="1">+</button><span>/min · agora '+m.per_minute+'</span></div>'+
+     '<div class="note">O interruptor geral para todos os usos (tribos, narrador e Arthur). O teto por minuto vale para as mentes das tribos; o narrador só chama quando você pede.'+
+     (m.halted?'<br><span style="color:var(--bad)">Parado: '+esc(m.halted)+'</span>':'')+'</div></div>';
+
+  h+='<div class="sec">Fontes</div><div class="card"><table><tr><th>Fonte</th><th>Modelo · endpoint</th><th>Status</th><th>Usada por</th></tr>';
+  r.sources.forEach(function(s){
+    h+='<tr><td><b>'+esc(s.label)+'</b></td><td>'+esc(s.model)+(s.host?'<br><span class="no">'+esc(s.host)+'</span>':'')+'</td>'+
+       '<td class="'+(s.configured?"ok":"no")+'">'+(s.configured?(s.keyless?"ativa (sem chave)":"ativa"):"sem chave")+'</td>'+
+       '<td>'+(s.users.length?esc(s.users.join(", ")):'<span class="no">—</span>')+'</td></tr>'});
+  h+='</table><div class="note">As chaves ficam no <span style="font-family:var(--mono)">worldbox/.env</span> e nunca aparecem aqui.</div></div>';
+
+  h+='<div class="sec">Propósitos</div>';
+  r.purposes.forEach(function(p){var u=p.usage||{},bits=[];
+    if(u.calls!=null)bits.push(n(u.calls)+" chamadas");
+    if(u.per_minute!=null)bits.push(u.per_minute+"/min");
+    if(u.skipped)bits.push(n(u.skipped)+" puladas");
+    if(u.failures)bits.push(n(u.failures)+" falhas");
+    if(u.tokens_in!=null)bits.push("tokens "+n(u.tokens_in)+" / "+n(u.tokens_out));
+    if(u.tokens_cached)bits.push(n(u.tokens_cached)+" em cache");
+    if(u.messages!=null)bits.push(n(u.messages)+" mensagens, "+n(u.replies)+" respostas");
+    h+='<div class="card purpose"><div class="head"><b>'+esc(p.name)+'</b><span class="where '+(p.where==="Arthur"?"arthur":"")+'">'+esc(p.where)+'</span></div>'+
+       '<div class="what">'+esc(p.what)+'</div>'+
+       '<div class="kv"><span>modelo</span><span>'+esc(p.model)+'</span></div>'+
+       '<div class="kv"><span>estado</span><span class="state '+stateClass(p.state)+'">'+esc(p.state)+'</span></div>'+
+       '<div class="kv"><span>controle</span><span>'+esc(p.control)+'</span></div>'+
+       (bits.length?'<div class="usage">'+esc(bits.join(" · "))+'</div>':'')+
+       (p.control==="própria"?'<div class="ctl"><button data-llm="'+esc(p.id)+'" data-v="'+(p.enabled?"off":"on")+'">'+(p.enabled?"Desligar esta":"Ligar esta")+'</button></div>':'')+
+       '</div>'});
+  $("llms").innerHTML=h;
+}
+var lastCap=null;
+function pollLLMs(){return api("/api/llm/report").then(function(r){if(!r.ok)return;lastCap=r.master.cap;renderLLMs(r)}).catch(function(){})}
+$("llms").addEventListener("click",function(e){
+  var b=e.target.closest("button");if(!b)return;
+  if(b.dataset.llm)api("/api/llm",{target:b.dataset.llm,value:b.dataset.v}).then(function(){pollLLMs();pollState()});
+  else if(b.dataset.cap)api("/api/llm/cap",{value:Math.max(0,(lastCap||0)+(+b.dataset.cap))}).then(function(){pollLLMs();pollState()});
+});
+setInterval(function(){if(!document.hidden&&pane==="llms")pollLLMs()},2000);
+setInterval(function(){if(!document.hidden&&pane!=="llms")pollLLMs()},6000);
+
+/* If the game's map does not load in the frame, say so instead of a blank pane. */
+var frame=$("gameFrame"),loaded=false;
+frame.addEventListener("load",function(){loaded=true});
+setTimeout(function(){if(!loaded)$("gameDown").style.display="flex"},6000);
+
+pollState();pollMessages();setInterval(pollState,1000);setInterval(function(){if(!document.hidden)pollMessages()},1000);
+$("input").focus();
+})();
+</script></body></html>

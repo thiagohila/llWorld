@@ -1,6 +1,6 @@
 # Pendências — jogo (fork `worldbox/`)
 
-Estado em 2026-10-21 (fork em `d6472e1`): o jogo funciona; o que segue são riscos, limitações e lacunas para a próxima fase. Problemas e limitações encontrados no fork. Corrigir aqui significa **editar o fork** (commit no submódulo) ou contornar pelo `worldbox-ai/` — decidir caso a caso.
+Estado em 2026-10-21 (fork em `d6472e1`): o jogo funciona; o que segue são riscos, limitações e lacunas para a próxima fase. Problemas e limitações encontrados no fork. Corrigir aqui significa **editar o fork** (commit no submódulo) ou contornar pelo `arthur/` — decidir caso a caso.
 
 Formato: `- [ ] **título** — detalhe. Onde. Ref.` · Prioridade: 🔴 alta · 🟡 média · ⚪ baixa. Ao resolver, marque `[x]` e anote commit/data.
 
@@ -36,7 +36,7 @@ Não são bugs do jogo; são lacunas para o que queremos construir. Ref.: `docs/
 - [ ] 🔴 **Chefe reescolhido todo dia** — não existe líder fixo. `society/culture.py:choose_chieftain`, `simulation/engine.py:_process_roles_and_leadership`. Contornável por fora (patch) ou gancho no fork.
 - [ ] 🟡 **Memória do agente com 8 entradas e sem relações individuais** — `agents/agent.py:Memory`.
 - [ ] 🟡 **`toward` aplicado todo dia** — um "war" ≈ −128 de relação em 40 dias; magnitude é parâmetro de gameplay. `ai/minds.py:_nudge_diplomacy`.
-- [ ] 🟡 **Fundar civilização só existe dentro do servidor** — a lógica de `/found` está em `cli/webview.py:LiveState.found_civ`; o `worldbox-ai` vai precisar dela para fundar o reino. Extrair para uma função reutilizável ou reimplementar no `worldbox-ai`.
+- [ ] 🟡 **Fundar civilização só existe dentro do servidor** — a lógica de `/found` está em `cli/webview.py:LiveState.found_civ`; o Arthur vai precisar dela para fundar o reino. Extrair para uma função reutilizável ou reimplementar no Arthur.
 - [ ] ⚪ **Ações sem suporte no motor** — emissários, espionagem, investigação de intenções não existem.
 - [ ] ⚪ **Fork não é instalável** — sem `pyproject`; código externo precisa de `sys.path`/`PYTHONPATH`.
 
@@ -54,7 +54,7 @@ Ref.: `docs/worldbox/08-performance.md`.
 
 - [x] 🟡 **Poderes sem feedback** — `/act` funcionava, mas os eventos são `EventKind.SYSTEM`, que não entra em `LOGGED_KINDS` (`cli/webview.py`), e Bless/Blight só aparecem nas camadas Farm/Food. Resolvido no front-end (`static/live.html`): efeito visual, toast com o resultado e filtro "Powers" no log. commit `b10f9fb`.
 - [x] 🔴 **Smite não matava ninguém** — zerava a saúde, mas a regeneração do dia seguinte roda antes da checagem de morte (0/14 morreram no teste); e marcava ferimento, o que contaria as mortes como guerra. Agora mata na hora com a contabilidade do motor (14/14, `total_war_deaths` intacto). `cli/webview.py:LiveState.act`. commit `d6472e1`.
-- [ ] ⚪ **Eventos `SYSTEM` fora do feed do servidor** — quem consumir `/state` (ex.: `worldbox-ai`) não vê o uso de poderes. Avaliar incluir `system` em `LOGGED_KINDS`.
+- [ ] ⚪ **Eventos `SYSTEM` fora do feed do servidor** — quem consumir `/state` (ex.: Arthur) não vê o uso de poderes. Avaliar incluir `system` em `LOGGED_KINDS`.
 
 ## Divergências de documentação do fork
 

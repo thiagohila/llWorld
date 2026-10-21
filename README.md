@@ -12,8 +12,9 @@ Arthur listens, but decides for himself.
   simulator (not the commercial *WorldBox – God Simulator*). Runs as it came,
   with a new HUD and art, performance work, and LLM tribe minds that can use
   free providers (Gemini, Groq, OpenRouter, a local Ollama) or an offline mock.
-- `worldbox-ai/` — *next*: the Arthur advisor layer, built on the game's public
-  interfaces.
+- `arthur/` — **Arthur**, the advisor layer: its own HUD and server
+  (http://127.0.0.1:8766/, with the game map framed beside the conversation),
+  built on the game's public interfaces. Run `python arthur/run.py`.
 - `docs/` — reference for the fork, environment, security, performance,
   checklists and the roadmap.
 

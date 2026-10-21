@@ -27,8 +27,16 @@ Escuta só em `127.0.0.1` **[código]** — não é exposto na rede. Os riscos v
 - **[código]** XSS: o front usa `esc()` em todo texto vindo de LLM ou nomes de tribo antes de `innerHTML`. `esc` não escapa aspas, mas os únicos usos em atributo recebem dados do servidor, não da LLM. Sem achado.
 - **[código]** Nome de civilização em `/found` é filtrado para alfanuméricos e ` -'` (máx. 40) antes de ir para o prompt.
 
-## Mitigações possíveis (não aplicadas)
+## Rotas novas (2026-10-21) — já protegidas
+
+As rotas genéricas de extensão do jogo, `/ext` e `/ext/<id>/<ação>`, nasceram com as mitigações abaixo: `Host` precisa ser `127.0.0.1:porta` ou `localhost:porta`; POST com `Origin` de outro site é recusado; toda chamada exige o token da sessão no header `X-Worldbox-Token` (um site externo não consegue mandar esse header sem um preflight CORS que o servidor nunca responde); corpo limitado a 16 KB. **[executado]** `tests/worldbox/test_extensions.py`: sem token, `Host` de fora, `Origin` de fora e corpo grande → recusados; erro da extensão não vaza detalhes.
+
+O **servidor do Arthur** (`arthur/arthur/server.py`, porta 8766) segue o mesmo modelo, com o header `X-Arthur-Token` e um token próprio. **[executado]** `tests/arthur/test_server.py`: sem token, token errado, `Host` de fora, `Origin` de fora — inclusive a do mapa do jogo — e corpo grande → recusados.
+
+As rotas antigas do jogo continuam sem proteção (abaixo).
+
+## Mitigações possíveis (não aplicadas às rotas antigas)
 
 - Uso imediato: não deixar o mapa ao vivo aberto enquanto navega em sites não confiáveis, especialmente com chaves configuradas; preferir `--no-ai` quando não precisar das mentes.
 - No fork (se decidirmos editá-lo): validar `Host` ∈ {`127.0.0.1:porta`, `localhost:porta`}, exigir um token por sessão nas rotas que alteram estado (ou POST + checagem de `Origin`), limitar `radius`, e responder 500 sem o texto da exceção.
-- No `worldbox-ai/`: qualquer servidor próprio deve nascer com essas proteções.
+- No `arthur/`: qualquer servidor próprio deve nascer com essas proteções.

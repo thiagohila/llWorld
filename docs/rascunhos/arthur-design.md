@@ -1,10 +1,10 @@
-# Rascunho — design da IA do worldbox-ai
+# Rascunho — design da IA do Arthur
 
 > **Status: rascunho, não aprovado.** Escrito em 2026-10-20 como ideia antecipada; revisar com o Thiago antes da etapa 3 do `../roadmap.md`. Não usar como especificação sem essa revisão.
 >
 > **Mudou desde então (2026-10-21):** o backoff após falha já existe no fork; `chat()` aceita qualquer fonte compatível com OpenAI e a mente `mock` (desenvolvimento sem custo); `MindDirector` expõe uso e teto por minuto; o contrato atualizado de interfaces está no `../roadmap.md` (ele prevalece sobre a seção 3 abaixo).
 
-Design da camada de IA do llWorld para o protótipo "conselheiro do Rei Arthur". Define **o que a LLM vê, de onde isso vem, o que ela pode devolver e como o jogo valida e aplica**. Não é código; é o contrato que o código do `worldbox-ai/` vai seguir.
+Design da camada de IA do llWorld para o protótipo "conselheiro do Rei Arthur". Define **o que a LLM vê, de onde isso vem, o que ela pode devolver e como o jogo valida e aplica**. Não é código; é o contrato que o código do `arthur/` vai seguir.
 
 Base: `llWorld-visao-produto.md` (o quê) e `docs/worldbox/` (como o fork funciona). Legenda: **[código]** confirmado no fork · **[hipótese]** a validar · **[decisão]** escolha de design desta proposta · **[aberto]** decisão pendente do produto.
 
@@ -27,7 +27,7 @@ Base: `llWorld-visao-produto.md` (o quê) e `docs/worldbox/` (como o fork funcio
                  │        ▲ engine.minds = CouncilDirector (subclasse)       │
                  └────────┼─────────────────────┬────────────────────────────┘
                           │ TribePolicy validada│ eventos (subscribe) + snapshot sob lock
-┌─────────────────────────┼─────────────────────┼──── worldbox-ai ───────────────────────┐
+┌─────────────────────────┼─────────────────────┼──── Arthur ───────────────────────┐
 │  bridge/  (único módulo que importa worldbox)  ▼                                        │
 │     engine_adapter ──► KingdomView (dataclasses puras)   event_ingest ──► memória       │
 │                                                                                         │
@@ -57,9 +57,9 @@ Dois loops de LLM, separados de propósito:
 | Arthur fixo como líder | `engine._process_roles_and_leadership` chama `culture_system.choose_chieftain` pelo módulo. Envolver `worldbox.society.culture.choose_chieftain` de fora ("se Arthur está vivo entre os membros, é ele") funciona sem editar o fork. Trade-off: é um patch global no processo, frágil a mudanças upstream. Alternativa: um gancho mínimo no fork. | **[código]** seam existe · **[aberto]** qual usar |
 | Backoff após falha de API | já corrigido no fork (`d6472e1`): espera crescente e parada em erro fatal. | **[código]** |
 | Observar o mundo | `engine.events.subscribe(listener)`. | **[código]** |
-| Chat | Servidor HTTP próprio do `worldbox-ai`, outra porta, mesmo processo, compartilhando `engine` e `runner.lock`. O handler do fork fica intocado. Exige um entrypoint próprio que monte engine + runner + `LiveServer` do fork + servidor de chat. | **[decisão]** |
+| Chat | Servidor HTTP próprio do Arthur, outra porta, mesmo processo, compartilhando `engine` e `runner.lock`. O handler do fork fica intocado. Exige um entrypoint próprio que monte engine + runner + `LiveServer` do fork + servidor de chat. | **[decisão]** |
 | Chamar a LLM | Reusar `worldbox.ai.client.chat` (erros como valor, retentativa, TLS, fontes do `.env`, `mock`, `status`/tokens). Não duplicar. Dividir o teto por minuto com as mentes das tribos. | **[decisão]** |
-| Importar o fork | O fork não é instalável (sem `pyproject`). Opção v1: o entrypoint do `worldbox-ai` insere `worldbox/` no `sys.path` em um único lugar (`bridge/`). | **[decisão]** |
+| Importar o fork | O fork não é instalável (sem `pyproject`). Opção v1: o entrypoint do Arthur insere `worldbox/` no `sys.path` em um único lugar (`bridge/`). | **[decisão]** |
 
 ## 4. As camadas de contexto
 
@@ -108,7 +108,7 @@ Construída por `perception/` a partir de um `KingdomView` extraído sob lock. S
 - **Ameaças e oportunidades:** derivadas por regra (relação abaixo de X e distância abaixo de Y; vizinho com fome alta; celeiro abaixo de Z).
 - **Alegações não verificadas:** informações trazidas pelo jogador, marcadas como `claim` com fonte, nunca misturadas com observação.
 
-Todo vizinho é referenciado por `tribe_id` estável. **[código]** O fork expõe tudo (`relation_summary`, `_brief_tribe` veem todas as tribos); o filtro de conhecimento é responsabilidade do `worldbox-ai`.
+Todo vizinho é referenciado por `tribe_id` estável. **[código]** O fork expõe tudo (`relation_summary`, `_brief_tribe` veem todas as tribos); o filtro de conhecimento é responsabilidade do Arthur.
 
 ### L3 — Memória
 
@@ -156,7 +156,7 @@ Validação: `entities` precisam existir e ser conhecidas por Arthur; textos tru
 
 Validação em duas etapas:
 1. **Do fork:** `worldbox.ai.minds.parse_policy` (limites, aliases, invenções por material) **[código]**.
-2. **Do worldbox-ai:** `toward` só com tribos conhecidas por Arthur; respeito a `red_lines` checáveis por regra; `{}` ou política vazia **rejeitada** (o fork aceita e substitui pela padrão — **[código]**); `advice_id` inexistente descartado.
+2. **Do Arthur:** `toward` só com tribos conhecidas por Arthur; respeito a `red_lines` checáveis por regra; `{}` ou política vazia **rejeitada** (o fork aceita e substitui pela padrão — **[código]**); `advice_id` inexistente descartado.
 
 Falha → mantém a política anterior e registra erro com backoff.
 
@@ -202,12 +202,12 @@ Mapeamento dos exemplos da visão para o que o fork executa:
   - nenhuma referência a tribo desconhecida passa pela validação.
 - **Regressão do fork:** `--no-ai --seed 42 --days 3000` sem chaves continua com o mesmo md5.
 
-## 10. Estrutura proposta do `worldbox-ai/`
+## 10. Estrutura proposta do `arthur/`
 
 ```
-worldbox-ai/
+Arthur/
   run.py                    entrypoint: engine + runner + LiveServer do fork + chat
-  llworld_ai/
+  arthur/
     bridge/                 ÚNICO lugar que importa worldbox
       engine_adapter.py     snapshot → KingdomView; aplica política
       director.py           CouncilDirector(MindDirector)

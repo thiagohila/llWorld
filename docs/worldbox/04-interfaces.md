@@ -18,6 +18,8 @@ Nenhuma interface muda regras: todas leem o motor por `runner.lock`. As únicas 
 | `/act?tool=&x=&y=&radius=` | ferramentas de deus (quebram determinismo); responde `affected`. Smite mata na hora (desde `d6472e1`) |
 | `/found?x=&y=&name=&house=&people=` | planta uma civilização com provedor escolhido |
 | `/control?action=&value=` | pause, resume, speed; `ai` (on/off/toggle), `ai_cap` (N ou vazio), `ai_forget` — ver `03-ia.md` → Controle em tempo real. Responde `aiPaused` e `aiCap` |
+| `/ext` | manifesto das extensões registradas de fora (`LiveServer.add_extension`); exige o token |
+| `GET`/`POST /ext/<id>/<ação>` | repassa à extensão (`handle(ação, payload)`); **token** no header `X-Worldbox-Token` + `Host` local + `Origin` local no POST + corpo ≤ 16 KB. O token é gerado por sessão e injetado na página (`__WB_TOKEN__`) |
 | `/sprites/<arquivo>` | spritesheets e `sprites.json` de `static/sprites/`; só nomes simples `.png`/`.json` (sem `..`), lidos do disco a cada request |
 
 - **[executado]** Nesta máquina o OrbStack ocupa `*:8765`; `localhost` cai nele. Usar `127.0.0.1`.
@@ -30,6 +32,7 @@ Nenhuma interface muda regras: todas leem o motor por `runner.lock`. As únicas 
 - Sprites em pixel art gerados no navegador: terreno pré-renderizado (8 px por tile, 2 quadros de animação), pessoas 9×11 por profissão/estado, prédios por nível (Camp → City), placas de nome.
 - **Arte desenhada (2026-10-21):** spritesheets do Claude Design em `cli/static/sprites/` (`people`, `overlays`, `buildings`, `terrain`, `props` + `sprites.json` com células e âncoras). A página troca, pixel a pixel, o magenta (`#FF00FF`/`#FF80FF`/`#A000A0`) pela cor da tribo e pele/cabelo neutros pela variação da tribo; usa quadros de andar só para quem se moveu; árvores e efeitos dos poderes vêm de `props`. Praias e espuma continuam geradas por código (os tiles não têm transições). Sem os arquivos, cai nos sprites gerados. Trocar a arte = substituir os arquivos e dar F5.
 - Ao carregar, a página envia ao servidor a velocidade destacada (1×), para não rodar no default de 0,12 s do `config.py`.
+- **Extensões (2026-10-21):** para cada extensão `kind: "chat"` o HUD cria uma aba (antes de History) com um painel de conversa genérico — histórico, "pensando…", caixa de envio — que consulta `/ext/<id>/messages` a cada segundo e envia por `POST /ext/<id>/send`. O fork não sabe o que a extensão é. Recurso genérico e opcional: hoje nenhum projeto registra extensões — o Arthur tem HUD próprio (`arthur/`). O painel da direita termina acima do minimapa (altura medida em JS), para a caixa de texto nunca ficar coberta.
 - Botão **AI on/off** no topo (ao lado do play) e controles de LLM na aba Minds (ligar/desligar, teto por minuto, esquecer decisões).
 - Atalhos: `Espaço` pausa · `M` liga/desliga LLM · `1`–`6` poderes · `N` fundar · `L` alterna camadas · `F` enquadrar · `+`/`-` zoom · `[`/`]` velocidade · `Esc` cancela.
 

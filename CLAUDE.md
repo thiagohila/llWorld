@@ -7,14 +7,14 @@ Princípio: **a simulação manda nas regras do mundo; a LLM propõe decisões d
 ## Fase atual (2026-10-21)
 
 - **Concluída — o jogo:** o fork roda como veio, com melhorias (HUD e arte nova, −27–33% de custo por dia, poderes com feedback, Smite corrigido, mentes de LLM com controle de custo e fontes grátis — Gemini testado de verdade).
-- **Próxima — o projeto:** implementar o `worldbox-ai/` (conselheiro do Rei Arthur) e ajustar as camadas/interfaces entre ele e o jogo. Plano por etapas em `docs/roadmap.md`. Etapa 0 (decisões) feita: **tudo no mais simples, tudo no Gemini** — ver roadmap → Decisões da v1. Próxima: etapa 1 (esqueleto).
+- **Próxima — o projeto:** implementar o `arthur/` (conselheiro do Rei Arthur) e ajustar as camadas/interfaces entre ele e o jogo. Plano por etapas em `docs/roadmap.md`. Etapas 0 (decisões: **tudo no mais simples, tudo no Gemini**) e 1 (esqueleto + chat de ponta a ponta, sem LLM) feitas. Próxima: etapa 2 (reino do Arthur).
 - LLM controlável em jogo: botão **AI**/tecla `M`, `/control?action=ai…`, `ai on|off|cap|forget` no terminal. O Arthur deve obedecer o mesmo interruptor e teto.
 - Trabalhar em etapas pequenas e testáveis, combinadas com o Thiago antes de começar cada uma. Decisões de produto são dele.
 
 ## Camadas
 
 - **`worldbox/`** — fork de `ryfcx/worldbox` (simulador em Python; **não** é o WorldBox – God Simulator comercial), submódulo git (`thiagohila/worldbox`). "O jogo" = sempre este fork. Tratar como terceiros: não editar; se inevitável, mudança mínima e genérica, commitada no submódulo e depois o ponteiro no repo raiz.
-- **`worldbox-ai/`** — camada própria do llWorld (ainda não existe; é a próxima fase). Usará o jogo só pela superfície pública dele — contrato em `docs/roadmap.md` → Interfaces.
+- **`arthur/`** — **Arthur**, a parte do Thiago no projeto (o conselheiro do Rei Arthur). Tem **HUD e servidor próprios** (`http://127.0.0.1:8766/`, com o mapa do jogo num frame), no mesmo processo do jogo, lendo o mundo sob `runner.lock`. Usa o jogo só pela superfície pública, sempre via `arthur/arthur/bridge.py` — contrato em `docs/roadmap.md` → Interfaces. Rodar: `python arthur/run.py` (da raiz). O jogo tem um mecanismo genérico de painéis (`LiveServer.add_extension`) que o Arthur não usa.
 - **`worldbox-clone-backup/`** — cópia não versionada do fork. Não editar nem commitar.
 
 ## Onde está o contexto
