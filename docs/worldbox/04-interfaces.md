@@ -11,11 +11,11 @@ Nenhuma interface muda regras: todas leem o motor por `runner.lock`. As únicas 
 |---|---|
 | `/` | página (`static/live.html`, relida do disco a cada request) |
 | `/world` | terreno e dimensões, buscado uma vez |
-| `/state?since=` | snapshot: agentes, tribos, mentes, assentamentos, log; polling a cada 500 ms |
+| `/state?since=` | snapshot: agentes, tribos, mentes, assentamentos, log; `ai.usage` = chamadas, por minuto/teto, puladas, falhas, tokens, `halted`; polling a cada 500 ms |
 | `/inspect?x=&y=` | detalhe de um tile |
 | `/overlay?kind=` | camada (fertilidade etc.), a cada 4 s |
 | `/explain` | narrador; **solta o lock antes da chamada de rede** |
-| `/act?tool=&x=&y=&radius=` | ferramentas de deus (quebram determinismo) |
+| `/act?tool=&x=&y=&radius=` | ferramentas de deus (quebram determinismo); responde `affected`. Smite mata na hora (desde `d6472e1`) |
 | `/found?x=&y=&name=&house=&people=` | planta uma civilização com provedor escolhido |
 | `/control?action=&value=` | pause, resume, speed |
 | `/sprites/<arquivo>` | spritesheets e `sprites.json` de `static/sprites/`; só nomes simples `.png`/`.json` (sem `..`), lidos do disco a cada request |

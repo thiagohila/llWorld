@@ -4,14 +4,16 @@ Protótipo de jogo: um mundo simulado que evolui sozinho, com personagens movido
 
 Princípio: **a simulação manda nas regras do mundo; a LLM propõe decisões de alto nível que o jogo valida e executa.** Nada narrado pode contradizer o estado da simulação.
 
-## Fase atual
+## Fase atual (2026-10-21)
 
-Documentação e preparação de ambiente (ajustes no terreno). **Não implementar o `worldbox-ai/` sem pedido explícito.**
+- **Concluída — o jogo:** o fork roda como veio, com melhorias (HUD e arte nova, −27–33% de custo por dia, poderes com feedback, Smite corrigido, mentes de LLM com controle de custo e fontes grátis — Gemini testado de verdade).
+- **Próxima — o projeto:** implementar o `worldbox-ai/` (conselheiro do Rei Arthur) e ajustar as camadas/interfaces entre ele e o jogo. Plano por etapas em `docs/roadmap.md`; decisões de produto em aberto em `docs/pendencias/projeto.md`.
+- Trabalhar em etapas pequenas e testáveis, combinadas com o Thiago antes de começar cada uma. Decisões de produto são dele.
 
 ## Camadas
 
 - **`worldbox/`** — fork de `ryfcx/worldbox` (simulador em Python; **não** é o WorldBox – God Simulator comercial), submódulo git (`thiagohila/worldbox`). "O jogo" = sempre este fork. Tratar como terceiros: não editar; se inevitável, mudança mínima e genérica, commitada no submódulo e depois o ponteiro no repo raiz.
-- **`worldbox-ai/`** — camada própria do llWorld (ainda não existe). Usará o jogo só pela superfície pública dele.
+- **`worldbox-ai/`** — camada própria do llWorld (ainda não existe; é a próxima fase). Usará o jogo só pela superfície pública dele — contrato em `docs/roadmap.md` → Interfaces.
 - **`worldbox-clone-backup/`** — cópia não versionada do fork. Não editar nem commitar.
 
 ## Onde está o contexto
@@ -19,6 +21,7 @@ Documentação e preparação de ambiente (ajustes no terreno). **Não implement
 | Preciso de… | Ler |
 |---|---|
 | o que estamos construindo | `llWorld-visao-produto.md` |
+| estado atual e próximas etapas | `docs/roadmap.md` |
 | índice e convenções dos docs | `docs/README.md` |
 | versões (Python, git, fork, modelos LLM, portas) e setup do zero | `docs/ambiente.md` |
 | como o jogo funciona, por tema | `docs/worldbox/01..06-*.md` |
@@ -26,7 +29,9 @@ Documentação e preparação de ambiente (ajustes no terreno). **Não implement
 | onde plugar código e problemas conhecidos | `docs/worldbox/06-extensao-e-armadilhas.md` |
 | segurança (chaves, servidor local) | `docs/worldbox/07-seguranca.md` |
 | o que falta resolver (checklists) | `docs/pendencias/jogo.md`, `docs/pendencias/projeto.md` |
-| ideias (não aprovadas) para a IA | `docs/rascunhos/` |
+| como a IA do jogo funciona (fontes, custo) | `docs/worldbox/03-ia.md` |
+| performance | `docs/worldbox/08-performance.md` |
+| ideias (não aprovadas) para a IA do Arthur | `docs/rascunhos/` |
 
 Leia sob demanda; não carregue tudo.
 
@@ -39,8 +44,9 @@ Leia sob demanda; não carregue tudo.
 
 - Python 3.14 na `.venv` da raiz (`source .venv/bin/activate`; recriar com `python3.14 -m venv .venv`). O `python3` global do pyenv (3.8) não funciona.
 - Dentro de `worldbox/`: `PYTHONDONTWRITEBYTECODE=1 python -m worldbox.main --no-ai --days 3000 --seed 42`.
-- Mapa ao vivo em `http://127.0.0.1:8765/` (não `localhost`: OrbStack usa a porta).
-- Não há testes automatizados; regressão = md5 com mesmo seed, sem chaves de API no ambiente.
+- Mapa ao vivo em `http://127.0.0.1:8765/` (não `localhost`: OrbStack usa a porta). Com IA: `python -m worldbox.main --live` (sem `--no-ai`).
+- LLM: `worldbox/.env` (gitignored, **nunca ler nem exibir valores**). Hoje configurado com Gemini grátis via `LLM_BASE_URL`/`LLM_MODEL`/`LLM_API_KEY`; para não estourar o plano grátis, `LLM_MAX_CALLS_PER_MINUTE=5`. Para desenvolver sem rede nem custo: `LLM_BASE_URL=mock`.
+- Testes offline (API simulada, sem rede, nunca leem o `.env`): `tests/worldbox/` — rodar conforme `tests/worldbox/README.md`. Regressão da simulação = md5 com mesmo seed (`--no-ai`, sem chaves no ambiente). Medições: `tools/perf/`.
 
 ## Regra de remotes do jogo
 

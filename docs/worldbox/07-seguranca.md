@@ -5,7 +5,8 @@ Revisão de 2026-10-20 sobre o fork em `4579b3c`. Nenhuma correção aplicada no
 ## Chaves e segredos
 
 - **[executado]** Nenhuma chave real nos arquivos nem no histórico git (repo raiz, `worldbox/`, `worldbox-clone-backup/`). Só o placeholder `DEEPSEEK_API_KEY=your-key-here` no README do fork e `.env.example` com valores vazios.
-- **[executado]** Nenhum `.env` existe hoje; nenhuma chave exportada no shell nem nos profiles (`~/.zshrc` etc.).
+- **[executado]** 2026-10-20: nenhum `.env` e nenhuma chave exportada no shell nem nos profiles (`~/.zshrc` etc.).
+- **[executado]** 2026-10-21: existe `worldbox/.env` com fonte Gemini (`LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`), confirmado ignorado pelo git (`git check-ignore`); o diff do commit que trouxe as fontes foi varrido e não contém chave. Ninguém deve ler ou exibir os valores — só verificar quais variáveis estão preenchidas.
 - **[código]** `.env` está no `.gitignore` do fork e da raiz.
 - **[código]** As chaves só saem da máquina no header `Authorization` para os endpoints oficiais, sempre com TLS verificado (`ai/client.py:chat`, `ssl_context`).
 - **[código]** As respostas JSON do servidor só citam o *nome* da variável (`"key": "DEEPSEEK_API_KEY"`), nunca o valor.
@@ -18,7 +19,7 @@ Escuta só em `127.0.0.1` **[código]** — não é exposto na rede. Os riscos v
 
 | Risco | Evidência | Impacto |
 |---|---|---|
-| **CSRF**: rotas que alteram estado são GET, sem checagem de `Origin`/token | **[executado]** `/act?tool=plague` com `Origin: https://site-malicioso.example` foi aceito | qualquer site aberto no navegador enquanto o mapa roda pode disparar ferramentas de deus, fundar civilizações (`/found`), pausar, e chamar `/explain` (gasta créditos de API) |
+| **CSRF**: rotas que alteram estado são GET, sem checagem de `Origin`/token | **[executado]** `/act?tool=plague` com `Origin: https://site-malicioso.example` foi aceito | qualquer site aberto no navegador enquanto o mapa roda pode disparar ferramentas de deus, fundar civilizações (`/found`), pausar, e chamar `/explain` — com chave configurada, gasta créditos ou a cota diária grátis |
 | **DNS rebinding**: `Host` não é validado | **[executado]** `Host: evil.example:8765` respondeu 200 | um site pode ler `/state` (estado do mundo, erros da API) |
 | **Travamento por raio**: `radius` de `/act` não tem limite | **[código]** `tiles_within` itera `(2r+1)` por linha válida, segurando `runner.lock` | um `radius` enorme congela a simulação |
 | Erros 500 com texto da exceção | **[código]** `send_error(500, str(error))` | vazamento menor de detalhes internos |

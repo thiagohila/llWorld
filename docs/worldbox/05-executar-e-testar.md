@@ -30,11 +30,21 @@ python tools/compare_runs.py --days 6000                # compara configs em vá
 
 Sem ativar a venv: troque `python` por `../.venv/bin/python`.
 
+Com IA (fonte configurada em `worldbox/.env`, ver `03-ia.md` → Fontes de LLM):
+
+```bash
+python -m worldbox.main --live                                   # mentes ligadas
+LLM_MAX_CALLS_PER_MINUTE=5 python -m worldbox.main --live        # teto por minuto sem editar o .env
+LLM_BASE_URL=mock python -m worldbox.main --live                 # mentes offline, sem rede nem custo
+```
+
+Variáveis do ambiente sobrepõem as do `.env`.
+
 Outras flags de `main.py`: `--seed`, `--days`, `--width`, `--height`, `--population`.
 
 ## Testes
 
-- **[executado]** Não há suíte automatizada.
+- **[executado]** Testes offline em `tests/worldbox/` no repo do llWorld (como rodar: `tests/worldbox/README.md`); scripts de medição em `tools/perf/`. O fork em si não tem suíte.
 - Regressão disponível:
   1. `tools/compare_runs.py` — métricas lado a lado entre duas configs.
   2. md5 da saída headless com o mesmo seed, sem chaves no ambiente:
@@ -43,7 +53,11 @@ Outras flags de `main.py`: `--seed`, `--days`, `--width`, `--height`, `--populat
        python -m worldbox.main --no-ai --days 3000 --seed 42 | md5
      ```
      **[executado]** Referência: `46183c8d284315695c7706c0f923745a` (igual em 3.10, 3.12 e 3.14).
-- Para testes de código que chamam IA: monkeypatch de `worldbox.ai.minds._think` ou `worldbox.ai.client.chat`, sem rede.
+- Como os testes de IA offline funcionam (`tests/worldbox/test_ai_*.py`):
+  - simular a API trocando `worldbox.ai.minds.chat` (mentes) ou `worldbox.ai.client.urllib.request.urlopen` (cliente e narrador) — nada vai para a rede;
+  - **isolar do `.env` real**: `client._DOTENV_LOADED = True` antes de qualquer chamada e limpar `LLM_*`/chaves do ambiente — senão o teste lê a fonte configurada do usuário;
+  - motor completo com `LLM_BASE_URL=mock` e `urlopen` trocado por uma função que falha, para provar que não houve rede.
+  - Cobertos: backoff em 429, parada em 401, rejeição de `{}`, teto por minuto e por tempo real, chamadas puladas, parâmetros por fonte, reenvio após 400, narrador só com OpenAI, fonte genérica com e sem chave, mente `mock`.
 
 ## Determinismo
 

@@ -6,6 +6,10 @@
 
 - `../llWorld-visao-produto.md` — visão de produto: o que queremos construir e por quê. Fonte de verdade sobre o *quê*.
 
+## Estado e plano
+
+- `roadmap.md` — estado atual, contrato de interfaces entre `worldbox` e `worldbox-ai`, próximas etapas.
+
 ## Ambiente
 
 - `ambiente.md` — versões de tudo que o projeto usa (Python, git, fork, modelos de LLM, portas) e como montar do zero.
@@ -30,11 +34,11 @@
 
 ## Rascunhos
 
-- `rascunhos/worldbox-ai-design.md` — ideias antecipadas para a camada de IA. **Não aprovado.**
+- `rascunhos/worldbox-ai-design.md` — ideias de design para a camada do Arthur (contexto, contratos, confiança). **Não aprovado**; revisar antes da etapa 3 do roadmap.
 
 ## Convenções destes docs
 
 - Marcação de confiança: **[código]** lido no fonte · **[executado]** verificado rodando · **[hipótese]** não verificado.
 - Referências como `arquivo.py:função`, relativas a `worldbox/worldbox/` (o pacote) salvo indicação.
-- A referência descreve o fork no commit **`d6472e1`** (upstream `4579b3c` + HUD/sprites `b10f9fb` + performance `bfe84cd` + arte desenhada `6804118` + fontes de LLM/custo/Smite `d6472e1`). Ao atualizar o submódulo, revisar os docs afetados e atualizar este hash.
+- A referência descreve o fork no commit **`6dc41f1`** (upstream `4579b3c` + HUD/sprites `b10f9fb` + performance `bfe84cd` + arte desenhada `6804118` + fontes de LLM/custo/Smite `d6472e1` + README `6dc41f1`). Ao atualizar o submódulo, revisar os docs afetados e atualizar este hash.
 - Docs curtos e por tema. Detalhe que só o código responde fica no código; aqui vai o mapa.

@@ -1,6 +1,6 @@
 # Pendências — jogo (fork `worldbox/`)
 
-Problemas e limitações encontrados no fork. Corrigir aqui significa **editar o fork** (commit no submódulo) ou contornar pelo `worldbox-ai/` — decidir caso a caso.
+Estado em 2026-10-21 (fork em `d6472e1`): o jogo funciona; o que segue são riscos, limitações e lacunas para a próxima fase. Problemas e limitações encontrados no fork. Corrigir aqui significa **editar o fork** (commit no submódulo) ou contornar pelo `worldbox-ai/` — decidir caso a caso.
 
 Formato: `- [ ] **título** — detalhe. Onde. Ref.` · Prioridade: 🔴 alta · 🟡 média · ⚪ baixa. Ao resolver, marque `[x]` e anote commit/data.
 
@@ -19,12 +19,14 @@ Formato: `- [ ] **título** — detalhe. Onde. Ref.` · Prioridade: 🔴 alta ·
 - [x] 🟡 **`parse_policy({})` substitui a política** — JSON vazio agora é rejeitado em `MindDirector._drain` e conta como falha. commit `d6472e1`.
 - [ ] 🟡 **`tribe_id` inválido passa no parse** — só é ignorado na aplicação. `ai/minds.py:parse_policy`, `_nudge_diplomacy`.
 - [x] 🟡 **Narrador só funciona com DeepSeek** — `narrate` aceita qualquer chave e `chat()` cai no provedor disponível. commit `d6472e1`.
+- [ ] 🟡 **Observar: mais guerras com IA ligada?** — com o controle de custo, uma política dura mais tempo de jogo e `_nudge_diplomacy` a aplica todo dia; medir guerras com e sem IA antes de mexer.
+- [ ] ⚪ **Parâmetros do `gpt-5-mini` não confirmados** — o cliente se adapta a um 400, mas só uma chamada real com chave OpenAI confirma. `ai/client.py:chat`.
 - [ ] ⚪ **`errors` alterado sem lock** — `_drain` escreve em `self.errors` fora de `_lock`, enquanto `snapshot` lê com lock. `ai/minds.py`.
 
 ## Determinismo e testes
 
 - [ ] 🟡 **Chaves no ambiente mudam a história mesmo com `--no-ai`** — `_spawn_founder` atribui `ai_house` sempre; `_process_births` só sorteia `rng` quando os pais têm casas diferentes. `simulation/engine.py`. Ref.: `docs/worldbox/05-executar-e-testar.md`.
-- [ ] 🟡 **Sem suíte de testes** — só `tools/compare_runs.py` e md5 manual.
+- [ ] 🟡 **Sem suíte de testes no fork** — mitigado: testes offline do jogo vivem no llWorld (`tests/worldbox/`: mentes, fontes de LLM, Smite) + md5 + `tools/compare_runs.py`. Falta cobrir simulação (combate, doenças, assentamentos) e rodar tudo num comando.
 - [ ] ⚪ **Registro global de tecnologias** — `register_technology` só limpa em `engine.reset()`; atrapalha vários motores no mesmo processo. `society/technology.py`.
 
 ## Limitações relevantes para o protótipo do Arthur
@@ -34,6 +36,7 @@ Não são bugs do jogo; são lacunas para o que queremos construir. Ref.: `docs/
 - [ ] 🔴 **Chefe reescolhido todo dia** — não existe líder fixo. `society/culture.py:choose_chieftain`, `simulation/engine.py:_process_roles_and_leadership`. Contornável por fora (patch) ou gancho no fork.
 - [ ] 🟡 **Memória do agente com 8 entradas e sem relações individuais** — `agents/agent.py:Memory`.
 - [ ] 🟡 **`toward` aplicado todo dia** — um "war" ≈ −128 de relação em 40 dias; magnitude é parâmetro de gameplay. `ai/minds.py:_nudge_diplomacy`.
+- [ ] 🟡 **Fundar civilização só existe dentro do servidor** — a lógica de `/found` está em `cli/webview.py:LiveState.found_civ`; o `worldbox-ai` vai precisar dela para fundar o reino. Extrair para uma função reutilizável ou reimplementar no `worldbox-ai`.
 - [ ] ⚪ **Ações sem suporte no motor** — emissários, espionagem, investigação de intenções não existem.
 - [ ] ⚪ **Fork não é instalável** — sem `pyproject`; código externo precisa de `sys.path`/`PYTHONPATH`.
 

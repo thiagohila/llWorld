@@ -9,7 +9,10 @@
 | `ai.minds.parse_policy`, `TribePolicy` | validar e representar decisões no formato que o motor aplica | **[código]** |
 | `agents.behavior.SocialContext` | multiplicadores por agente | **[código]** |
 | `society.culture.choose_chieftain` | chamado via módulo pelo motor; pode ser envolvido de fora (patch global no processo) | **[código]** |
-| `ai.client.chat` | cliente LLM reutilizável | **[código]** |
+| `ai.client.chat` | cliente LLM reutilizável; respeita as fontes do `.env` (`custom`, `mock`) e devolve `status`/`fatal`/tokens | **[código]** |
+| `ai.mock.decide(briefing)` / `LLM_BASE_URL=mock` | política por regras a partir de um briefing — base para testes sem rede | **[código]** |
+| `MindDirector.usage_snapshot()` / `.halted` / `.call_cap()` | uso e estado das mentes, para relatórios ou para dividir o teto com outro loop de LLM | **[código]** |
+| `engine.events.subscribe(fn)` vê eventos `SYSTEM` | poderes e mensagens do sistema, que o feed HTTP (`LOGGED_KINDS`) não mostra | **[código]** |
 | Servidor HTTP próprio no mesmo processo, outra porta, usando `runner.lock` | novas rotas sem tocar `webview.py` | **[hipótese]** |
 | `rules.py` (`WEIGHTS`, `@scorer`) | mudar comportamento base — **é edição do fork** | **[código]** |
 

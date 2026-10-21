@@ -7,10 +7,20 @@ Formato: `- [ ] **título** — detalhe.` · Prioridade: 🔴 alta · 🟡 médi
 ## Repositório e infraestrutura
 
 - [x] 🟡 **Sem remote no repo llWorld** — resolvido em 2026-10-21: `origin` = `git@github.com:thiagohila/llWorld.git`, branch `main`.
-- [ ] 🟡 **README raiz desatualizado** — cita `worldbox-ai/` como existente, chama o fork de "upstream-derived game" sem dizer que é `ryfcx/worldbox` (e não o WorldBox comercial), e não aponta para `CLAUDE.md`, visão de produto nem `docs/`.
+- [x] 🟡 **README raiz desatualizado** — reescrito em 2026-10-21: origem do fork, estado atual, como rodar, links para visão, roadmap e `CLAUDE.md`.
 - [ ] ⚪ **Acompanhar o upstream** — checar de tempos em tempos `git -C worldbox ls-remote upstream` e decidir se puxa mudanças de `ryfcx/worldbox`.
 - [ ] ⚪ **Destino do `worldbox-clone-backup/`** — cópia idêntica do fork, hoje no `.gitignore`. Manter, mover para fora do repo ou apagar.
 - [ ] ⚪ **`python3` global do pyenv quebrado** — 3.8.13 sem OpenSSL 1.1. O projeto usa a `.venv` (3.14), mas o global da máquina segue quebrado.
+
+## Próxima fase — `worldbox-ai/` (ver `../roadmap.md`)
+
+- [ ] 🔴 **Etapa 0 — decisões de produto** — itens da seção "Decisões de produto" abaixo.
+- [ ] 🔴 **Etapa 1 — esqueleto do `worldbox-ai/`** — entrypoint com engine + runner + mapa do fork, ponte de import, config, testes offline.
+- [ ] 🟡 **Etapa 2 — reino do Arthur** — fundar o reino, chefe fixo, persona.
+- [ ] 🟡 **Etapa 3 — mente do Arthur** — loop próprio de decisão para a tribo dele; revisar antes o rascunho de design.
+- [ ] 🟡 **Etapa 4 — chat do conselheiro** — rota segura + UI; conselho vira agenda, nunca muda o mundo direto.
+- [ ] ⚪ **Etapa 5 — memória, confiança, conhecimento limitado.**
+- [ ] ⚪ **Etapa 6 — avaliação pelos critérios da visão §11.**
 
 ## Decisões de arquitetura
 
@@ -30,10 +40,13 @@ Vindas da visão (`llWorld-visao-produto.md`) e do rascunho de design.
 - [ ] 🟡 **Conhecimento limitado** — raio de contato, atraso de notícias, informações falsas.
 - [ ] 🟡 **Ritmo do mundo vs. conversa** — o mundo pausa, desacelera ou segue enquanto o jogador conversa.
 - [ ] ⚪ **Idioma** — Arthur fala português; prompts internos em inglês ou português.
-- [ ] ⚪ **Modelo de LLM** — mesmo do fork (`deepseek-flash`) ou um mais capaz para a conversa.
+- [ ] ⚪ **Modelo de LLM** — hoje as tribos usam Gemini grátis (`gemini-3.1-flash-lite`); decidir se Arthur usa o mesmo, um mais capaz para a conversa, ou `mock` em desenvolvimento.
+- [ ] 🟡 **Orçamento de LLM com Arthur ativo** — Arthur e tribos dividem o mesmo teto grátis (por minuto e por dia); talvez reduzir `max_minds` ou dar prioridade ao Arthur.
+- [ ] 🟡 **UI do chat** — página própria do `worldbox-ai` ou painel no `live.html` do fork.
 
 ## Qualidade e processo
 
-- [ ] 🟡 **Estratégia de testes do `worldbox-ai/`** — unitários sem rede (provedor LLM falso), cenários por seed, regressão md5 do fork.
-- [ ] ⚪ **Script de regressão** — automatizar a checagem de md5 (`docs/worldbox/05-executar-e-testar.md`) em vez de comando manual.
+- [ ] 🟡 **Estratégia de testes do `worldbox-ai/`** — padrão já provado no jogo: API simulada, `.env` isolado, mente `mock` para cenários por seed, regressão md5 do fork (`tests/worldbox/`). Aplicar o mesmo no `worldbox-ai`.
+- [x] 🟡 **Testes offline fora do repo** — levados para `tests/worldbox/` (mentes, fontes de LLM, Smite) e `tools/perf/` (medições) em 2026-10-21.
+- [ ] ⚪ **Script de regressão** — automatizar a checagem de md5 (`docs/worldbox/05-executar-e-testar.md`) junto com `tests/worldbox/` em um comando só.
 - [ ] ⚪ **Manutenção dos docs** — ao atualizar o submódulo, revisar `docs/worldbox/` e o hash em `docs/README.md` e `docs/ambiente.md`.

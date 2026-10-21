@@ -2,12 +2,12 @@
 
 ## Origem
 
-- **[executado]** Upstream: `https://github.com/ryfcx/worldbox` (autores `ryfcx`/Ryan, 7 commits entre 2026-08-10 e 2026-10-07, versão `0.1.0` em `worldbox/__init__.py`). Nosso fork `thiagohila/worldbox` partiu do commit `4579b3c` do upstream (conferido com `git ls-remote` em 2026-10-20) e hoje tem 4 commits próprios: `b10f9fb` (HUD e sprites), `bfe84cd` (performance), `6804118` (arte desenhada) e `d6472e1` (fontes de LLM, custo, Smite).
+- **[executado]** Upstream: `https://github.com/ryfcx/worldbox` (autores `ryfcx`/Ryan, 7 commits entre 2026-08-10 e 2026-10-07, versão `0.1.0` em `worldbox/__init__.py`). Nosso fork `thiagohila/worldbox` partiu do commit `4579b3c` do upstream (conferido com `git ls-remote` em 2026-10-20) e hoje tem 5 commits próprios: `b10f9fb` (HUD e sprites), `bfe84cd` (performance), `6804118` (arte desenhada), `d6472e1` (fontes de LLM, custo, Smite) e `6dc41f1` (README).
 - **Não é o WorldBox – God Simulator** (jogo comercial do Maxim Karpenko, código fechado, versões 0.5x em 2026). Só compartilha o nome e a ideia de "mundo que evolui"; nenhum código, regra ou asset vem de lá. Diferenças em relação ao WorldBox comercial são esperadas em tudo.
 
 ## O que é
 
-Simulador de civilizações em Python puro (stdlib, 3.10+). ~100 pessoas num mapa procedural; tribos, assentamentos, tecnologia, guerras e pragas emergem. Tribos grandes podem ser "jogadas" por LLMs (DeepSeek/OpenAI).
+Simulador de civilizações em Python puro (stdlib, 3.10+). ~100 pessoas num mapa procedural; tribos, assentamentos, tecnologia, guerras e pragas emergem. Tribos grandes podem ser "jogadas" por LLMs — DeepSeek, OpenAI ou qualquer endpoint compatível com OpenAI (inclusive grátis e local), ou por uma mente offline de regras (`mock`). Ver `03-ia.md`.
 
 ## Mapa de módulos
 
@@ -20,8 +20,9 @@ worldbox/worldbox/
   agents/             Agent, Memory, necessidades, decide()/execute(), utilidade, nomes
   society/            tribos, assentamentos, tecnologia, profissões, cultura, diplomacia, combate, doenças
   simulation/         engine (ciclo do dia + runner), eventos, crônica, relógio
-  ai/                 cliente LLM, mentes das tribos, invenções, narrador
-  cli/                terminal, dashboard, servidor do mapa ao vivo + static/live.html
+  ai/                 cliente LLM (fontes por .env), mentes das tribos, invenções, narrador, mock.py (mente offline)
+  cli/                terminal, dashboard, servidor do mapa ao vivo
+  cli/static/         live.html (HUD) + sprites/ (spritesheets e sprites.json)
   export.py           grava uma execução em JSON para o viewer
 worldbox/tools/       compare_runs.py, build_viewer.py, viewer_template.html
 ```
@@ -53,12 +54,12 @@ Execução contínua: `SimulationRunner` roda `step()` numa thread segurando `ru
 | group / tribe | tribo; tem conhecimento, chefe, assentamento | `society/groups.py:Group` |
 | chieftain | chefe da tribo, reescolhido todo dia por prestígio | `society/culture.py:choose_chieftain` |
 | role | profissão: child, forager, farmer, warrior, scholar, healer, elder | `society/roles.py:Role` |
-| settlement | assentamento: Camp → Hamlet → Village → Town | `society/settlements.py` |
+| settlement | assentamento: Camp → Hamlet → Village → Town → City | `society/settlements.py` |
 | era | Stone, Agricultural, Bronze, Iron Age | `society/technology.py:ERAS` |
 | relation | relação entre duas tribos, −100..100 | `society/diplomacy.py:Diplomacy` |
 | event | acontecimento do dia (ring buffer) | `simulation/events.py:EventLog` |
 | chronicle | marcos permanentes da história | `simulation/chronicle.py:Chronicle` |
 | mind | LLM que decide a política de uma tribo | `ai/minds.py:MindDirector` |
 | policy / stance | decisão da mente; stance ∈ survive, farm, expand, defend, research, raid, trade | `ai/minds.py:TribePolicy` |
-| house | provedor de LLM (deepseek / openai) atribuído a tribo e pessoa | `ai/client.py:HOUSES` |
-| god tools | intervenções manuais pelo mapa ao vivo | `cli/webview.py:LiveState.act` |
+| house | fonte de LLM atribuída a tribo e pessoa: `deepseek`, `openai`, `custom` (do `.env`) ou `mock` | `ai/client.py:HOUSES`, `all_houses` |
+| god tools / powers | intervenções manuais pelo mapa ao vivo: spawn, bless, blight, smite, plague, heal | `cli/webview.py:LiveState.act` |

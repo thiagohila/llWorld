@@ -22,9 +22,9 @@ Fonte única das versões do projeto. Atualize aqui quando algo mudar e registre
 
 | Item | Versão |
 |---|---|
-| Fork `worldbox/` (submódulo) | `d6472e1` (2026-10-21; 4 commits à frente do upstream), `git@github.com:thiagohila/worldbox.git`, branch `main`; versão do pacote `0.1.0` |
+| Fork `worldbox/` (submódulo) | `6dc41f1` (2026-10-21; 5 commits à frente do upstream), `git@github.com:thiagohila/worldbox.git`, branch `main`; versão do pacote `0.1.0` |
 | Upstream do fork | `https://github.com/ryfcx/worldbox` (remote `upstream` no submódulo) — mesmo commit `4579b3c` em 2026-10-20 |
-| Docs de referência do fork | descrevem `d6472e1` |
+| Docs de referência do fork | descrevem `6dc41f1` |
 | `worldbox-ai/` | ainda não existe |
 
 ## Serviços externos (opcionais)
@@ -39,6 +39,8 @@ Só usados com IA ligada (sem `--no-ai` e com chave em `worldbox/.env`). Definid
 | Mente offline por regras | — | `LLM_BASE_URL=mock` | — |
 
 Opções grátis (Groq, Gemini, OpenRouter `:free`, Ollama local) e limites: `worldbox/03-ia.md` → Fontes de LLM. O narrador funciona com qualquer fonte.
+
+**Configuração atual (2026-10-21):** `worldbox/.env` com Gemini grátis (`gemini-3.1-flash-lite` pelo endpoint compatível com OpenAI), testado com chamadas reais. Recomendado `LLM_MAX_CALLS_PER_MINUTE=5`. O `.env` é gitignored — nunca ler nem exibir os valores.
 
 ## Portas locais
 

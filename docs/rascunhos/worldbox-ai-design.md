@@ -1,6 +1,8 @@
 # Rascunho — design da IA do worldbox-ai
 
-> **Status: rascunho, não aprovado.** Ideias antecipadas sobre a implementação; o foco atual é documentação. Não usar como especificação sem revisão do Thiago.
+> **Status: rascunho, não aprovado.** Escrito em 2026-10-20 como ideia antecipada; revisar com o Thiago antes da etapa 3 do `../roadmap.md`. Não usar como especificação sem essa revisão.
+>
+> **Mudou desde então (2026-10-21):** o backoff após falha já existe no fork; `chat()` aceita qualquer fonte compatível com OpenAI e a mente `mock` (desenvolvimento sem custo); `MindDirector` expõe uso e teto por minuto; o contrato atualizado de interfaces está no `../roadmap.md` (ele prevalece sobre a seção 3 abaixo).
 
 Design da camada de IA do llWorld para o protótipo "conselheiro do Rei Arthur". Define **o que a LLM vê, de onde isso vem, o que ela pode devolver e como o jogo valida e aplica**. Não é código; é o contrato que o código do `worldbox-ai/` vai seguir.
 
@@ -53,10 +55,10 @@ Dois loops de LLM, separados de propósito:
 |---|---|---|
 | Substituir a mente da tribo do Arthur | `engine.minds` é atributo público; o motor só chama `tick`, `reset`, `policy_for`, `thinking_count`; `LiveState` e o terminal chamam `snapshot` e `policy_for`. Uma subclasse `CouncilDirector(MindDirector)` atribuída após construir o motor cobre todos os usos. As demais tribos continuam com o comportamento original via `super()`. | **[código]** |
 | Arthur fixo como líder | `engine._process_roles_and_leadership` chama `culture_system.choose_chieftain` pelo módulo. Envolver `worldbox.society.culture.choose_chieftain` de fora ("se Arthur está vivo entre os membros, é ele") funciona sem editar o fork. Trade-off: é um patch global no processo, frágil a mudanças upstream. Alternativa: um gancho mínimo no fork. | **[código]** seam existe · **[aberto]** qual usar |
-| Backoff após falha de API | `_drain`/`_schedule` são métodos comuns; a subclasse corrige a repetição diária. | **[código]** |
+| Backoff após falha de API | já corrigido no fork (`d6472e1`): espera crescente e parada em erro fatal. | **[código]** |
 | Observar o mundo | `engine.events.subscribe(listener)`. | **[código]** |
 | Chat | Servidor HTTP próprio do `worldbox-ai`, outra porta, mesmo processo, compartilhando `engine` e `runner.lock`. O handler do fork fica intocado. Exige um entrypoint próprio que monte engine + runner + `LiveServer` do fork + servidor de chat. | **[decisão]** |
-| Chamar a LLM | Reusar `worldbox.ai.client.chat` (erros como valor, retentativa, TLS). Não duplicar. | **[decisão]** |
+| Chamar a LLM | Reusar `worldbox.ai.client.chat` (erros como valor, retentativa, TLS, fontes do `.env`, `mock`, `status`/tokens). Não duplicar. Dividir o teto por minuto com as mentes das tribos. | **[decisão]** |
 | Importar o fork | O fork não é instalável (sem `pyproject`). Opção v1: o entrypoint do `worldbox-ai` insere `worldbox/` no `sys.path` em um único lugar (`bridge/`). | **[decisão]** |
 
 ## 4. As camadas de contexto
@@ -191,7 +193,7 @@ Mapeamento dos exemplos da visão para o que o fork executa:
 ## 9. Observabilidade e testes
 
 - **Trace JSONL** por chamada: loop, dia, versão do prompt, tamanho de cada camada, modelo, latência, resposta crua, erros de validação, efeitos aplicados. Permite replay e depuração de "por que Arthur fez isso".
-- **Gateway com provedores trocáveis:** `fork` (`client.chat`), `fake` (respostas roteirizadas), `replay` (lê um trace).
+- **Gateway com provedores trocáveis:** `fork` (`client.chat`), `fake` (respostas roteirizadas), `replay` (lê um trace). O fork já tem a mente `mock` (`LLM_BASE_URL=mock`) para as tribos — o Arthur pode ganhar um `mock` equivalente.
 - **Testes unitários** (stdlib `unittest`, sem rede): percepção, recuperação, orçamento, validação — tudo sobre dataclasses, sem motor.
 - **Testes de cenário** (seed + conselhos roteirizados + provedor fake/replay), alinhados aos critérios da visão §11:
   - Arthur pode recusar (verdict `reject` não gera mudança de política ligada ao conselho);
