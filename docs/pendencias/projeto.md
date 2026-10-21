@@ -6,7 +6,7 @@ Formato: `- [ ] **título** — detalhe.` · Prioridade: 🔴 alta · 🟡 médi
 
 ## Repositório e infraestrutura
 
-- [ ] 🟡 **Sem remote no repo llWorld** — nada está salvo fora da máquina. Criar repositório remoto e dar push.
+- [x] 🟡 **Sem remote no repo llWorld** — resolvido em 2026-10-21: `origin` = `git@github.com:thiagohila/llWorld.git` (privado), branch `main`.
 - [ ] 🟡 **README raiz desatualizado** — cita `worldbox-ai/` como existente, chama o fork de "upstream-derived game" sem dizer que é `ryfcx/worldbox` (e não o WorldBox comercial), e não aponta para `CLAUDE.md`, visão de produto nem `docs/`.
 - [ ] ⚪ **Acompanhar o upstream** — checar de tempos em tempos `git -C worldbox ls-remote upstream` e decidir se puxa mudanças de `ryfcx/worldbox`.
 - [ ] ⚪ **Destino do `worldbox-clone-backup/`** — cópia idêntica do fork, hoje no `.gitignore`. Manter, mover para fora do repo ou apagar.
