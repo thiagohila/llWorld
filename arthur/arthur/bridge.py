@@ -28,6 +28,7 @@ def ensure_fork_importable() -> None:
 
 ensure_fork_importable()
 
+from worldbox.agents.needs import Needs  # noqa: E402
 from worldbox.ai import narrator  # noqa: E402
 from worldbox.ai.client import all_houses, available_houses  # noqa: E402
 from worldbox.ai.client import is_available as llm_available  # noqa: E402
@@ -35,8 +36,13 @@ from worldbox.cli.webview import LiveServer  # noqa: E402
 from worldbox.config import Config  # noqa: E402
 from worldbox.simulation.engine import SimulationEngine, SimulationRunner  # noqa: E402
 from worldbox.simulation.events import EventKind  # noqa: E402
+from worldbox.society import culture  # noqa: E402
+from worldbox.society.epidemics import DISEASES  # noqa: E402
+from worldbox.society.founding import found_tribe, settle_people  # noqa: E402
+from worldbox.society.groups import GroupRegistry  # noqa: E402
 
 __all__ = [
-    "FORK_ROOT", "Config", "EventKind", "LiveServer", "SimulationEngine",
-    "SimulationRunner", "all_houses", "available_houses", "llm_available", "narrator",
+    "DISEASES", "FORK_ROOT", "Config", "EventKind", "GroupRegistry", "LiveServer", "Needs",
+    "SimulationEngine", "SimulationRunner", "all_houses", "available_houses", "culture",
+    "found_tribe", "llm_available", "narrator", "settle_people",
 ]

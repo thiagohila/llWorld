@@ -22,9 +22,9 @@ Fonte única das versões do projeto. Atualize aqui quando algo mudar e registre
 
 | Item | Versão |
 |---|---|
-| Fork `worldbox/` (submódulo) | `e228169` (2026-10-21; 8 commits à frente do upstream), `git@github.com:thiagohila/worldbox.git`, branch `main`; versão do pacote `0.1.0` |
+| Fork `worldbox/` (submódulo) | `bbbea3a` (2026-10-21; 9 commits à frente do upstream), `git@github.com:thiagohila/worldbox.git`, branch `main`; versão do pacote `0.1.0` |
 | Upstream do fork | `https://github.com/ryfcx/worldbox` (remote `upstream` no submódulo) — mesmo commit `4579b3c` em 2026-10-20 |
-| Docs de referência do fork | descrevem `e228169` |
+| Docs de referência do fork | descrevem `bbbea3a` |
 | `arthur/` | etapa 1 (esqueleto): `arthur/run.py`, pacote `arthur` 0.1.0, só stdlib |
 
 ## Serviços externos (opcionais)

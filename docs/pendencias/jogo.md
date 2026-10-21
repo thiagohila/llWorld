@@ -36,7 +36,7 @@ Não são bugs do jogo; são lacunas para o que queremos construir. Ref.: `docs/
 - [ ] 🔴 **Chefe reescolhido todo dia** — não existe líder fixo. `society/culture.py:choose_chieftain`, `simulation/engine.py:_process_roles_and_leadership`. Contornável por fora (patch) ou gancho no fork.
 - [ ] 🟡 **Memória do agente com 8 entradas e sem relações individuais** — `agents/agent.py:Memory`.
 - [ ] 🟡 **`toward` aplicado todo dia** — um "war" ≈ −128 de relação em 40 dias; magnitude é parâmetro de gameplay. `ai/minds.py:_nudge_diplomacy`.
-- [ ] 🟡 **Fundar civilização só existe dentro do servidor** — a lógica de `/found` está em `cli/webview.py:LiveState.found_civ`; o Arthur vai precisar dela para fundar o reino. Extrair para uma função reutilizável ou reimplementar no Arthur.
+- [x] 🟡 **Fundar civilização só existe dentro do servidor** — extraída para `society/founding.py` (`found_tribe`, `settle_people`); `LiveState.found_civ` usa e dá o mesmo resultado com a mesma seed (comparado antes/depois). 2026-10-21.
 - [ ] ⚪ **Ações sem suporte no motor** — emissários, espionagem, investigação de intenções não existem.
 - [ ] ⚪ **Fork não é instalável** — sem `pyproject`; código externo precisa de `sys.path`/`PYTHONPATH`.
 

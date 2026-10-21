@@ -31,10 +31,13 @@ MAX_BODY = 16 * 1024
 class ArthurServer:
     """Serves Arthur's HUD and its JSON API while the world runs."""
 
-    def __init__(self, engine: Any, runner: Any, advisor: Any, game_url: str, port: int = 8766) -> None:
+    def __init__(
+        self, engine: Any, runner: Any, advisor: Any, game_url: str, port: int = 8766, kingdom: Any = None
+    ) -> None:
         self.engine = engine
         self.runner = runner
         self.advisor = advisor
+        self.kingdom = kingdom
         self.game_url = game_url
         self.port = port
         self.token = secrets.token_urlsafe(18)
@@ -73,6 +76,7 @@ class ArthurServer:
                 "perMinute": usage["per_minute"],
                 "cap": usage["cap"],
             },
+            "king": self.kingdom.summary() if self.kingdom is not None else {"ok": False},
             "gameUrl": self.game_url,
         }
 

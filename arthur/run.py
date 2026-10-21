@@ -20,19 +20,29 @@ from typing import List, Optional
 
 from arthur.advisor import Advisor
 from arthur.bridge import Config, LiveServer, SimulationEngine, SimulationRunner
+from arthur.kingdom import Kingdom
 from arthur.server import ArthurServer
+
+INITIAL_POPULATION = 50  # people scattered at the start, before any tribe
 
 
 def build(seed: Optional[int] = None, no_ai: bool = False, port: int = 8765, arthur_port: int = 8766):
-    """The game (engine, runner, live map) and Arthur's server, not yet started."""
+    """The game (engine, runner, live map), with Arthur's kingdom founded on
+    day zero, and Arthur's server; nothing started yet."""
     config = Config()
+    # Arthur's world starts smaller than the game's default (100): 50 wanderers,
+    # plus the kingdom's own people (persona["people"]).
+    config = dataclasses.replace(
+        config, agents=dataclasses.replace(config.agents, initial_population=INITIAL_POPULATION)
+    )
     if no_ai:
         config = dataclasses.replace(config, ai=dataclasses.replace(config.ai, enabled=False))
     engine = SimulationEngine(config=config, seed=seed)
     runner = SimulationRunner(engine)
     game = LiveServer(engine, runner, port=port)
+    kingdom = Kingdom(engine, runner, game.state)
     advisor = Advisor(engine, runner)
-    arthur = ArthurServer(engine, runner, advisor, game_url="", port=arthur_port)
+    arthur = ArthurServer(engine, runner, advisor, game_url="", port=arthur_port, kingdom=kingdom)
     return engine, runner, game, arthur
 
 

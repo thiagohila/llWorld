@@ -4,7 +4,7 @@ Atualizado em 2026-10-21. O *quê* está em `../llWorld-visao-produto.md`; ideia
 
 ## Estado atual
 
-### O jogo — fork `worldbox/` em `e228169` (funcionando)
+### O jogo — fork `worldbox/` em `bbbea3a` (funcionando)
 
 Roda como veio do `ryfcx/worldbox`, com melhorias pontuais — nenhuma regra de simulação mudou (md5 de regressão idêntico desde o início):
 
@@ -23,6 +23,7 @@ Ainda em aberto no jogo: segurança do servidor local (CSRF, DNS rebinding), det
 - Docs de referência do fork (`docs/worldbox/01..08`), ambiente e versões (`ambiente.md`), checklists, agentes `worldbox-guide` e `sim-runner`.
 - `.venv` com Python 3.14; remotes: `thiagohila/llWorld` e `thiagohila/worldbox` (push para o upstream bloqueado).
 - `arthur/` (Arthur) existe desde a etapa 1: HUD e servidor próprios (porta 8766, com o mapa do jogo num frame), ponte de import, conversa com respostas de teste sem LLM — ver `../arthur/README.md`.
+- Etapa 2: o **reino do Arthur** é fundado no dia zero (`arthur/arthur/kingdom.py`): Arthur Pendragon chefe fixo e imortal, reino que não se divide nem se dissolve, fora das vagas de LLM, com plaquinha dourada no mapa e botão "Onde está o rei?" no HUD do Arthur.
 
 ## Camadas e interfaces
 
@@ -46,10 +47,14 @@ llWorld/
 | Chamar a LLM | `ai.client.chat()` com as fontes do `.env` (DeepSeek, OpenAI, compatível com OpenAI, `mock`); `ChatResult` traz `status`, `fatal`, tokens | **pronto** [código] |
 | Ligar/desligar LLM em jogo | `engine.minds.paused` / `set_paused()`, `set_call_cap()`, `forget_policies()`; HTTP `/control?action=ai` / `ai_cap` / `ai_forget`; botão **AI** e tecla `M` no HUD; `ai on/off/cap/forget` no terminal | **pronto** [código] |
 | Controlar custo | `MindDirector` já limita as tribos; o loop do Arthur **usa o mesmo teto** (`call_cap`, `calls_last_minute`) e **respeita `paused`** | **a fazer** no Arthur |
-| Fundar o reino | mesmo caminho do `/found` (`groups.create` + agentes) — hoje dentro de `LiveState.found_civ` | **a extrair** (função reutilizável) ou duplicar no Arthur |
-| Arthur fixo como chefe | patch por fora em `society.culture.choose_chieftain` (chamado via módulo) | **decidido**, a fazer |
-| Arthur imortal (sem sucessão) | `Agent.lifespan_days` e saúde mínima, por fora; conferir `engine._process_deaths` | **decidido**, a fazer |
-| Reino não se divide nem se dissolve | patch por fora em `GroupRegistry.try_split` / `find_unviable` para a tribo do reino | **decidido**, a fazer |
+| Fundar o reino | `society.founding.found_tribe` / `settle_people` (extraídos de `LiveState.found_civ`, que agora os usa; comportamento idêntico) | **pronto** [executado] |
+| Arthur fixo como chefe | patch por fora em `society.culture.choose_chieftain` (chamado via módulo), só para o agente marcado `llworld_king` | **pronto** [executado] |
+| Arthur imortal (sem sucessão) | por fora: `KingNeeds` (saúde nunca abaixo de 1, nem na hora do combate), imunidade permanente a todas as doenças, idade fixa; Smite do mapa desvia dele (envolve `LiveState.act`) — nenhuma morte ou abate é contado para ele | **pronto** [executado] |
+| Reino não se divide nem se dissolve | patch por fora em `GroupRegistry.try_split` / `find_unviable`, só para a tribo marcada `llworld_realm`; se só o rei sobrar, chegam 6 colonos | **pronto** [executado] |
+| Reino fora das mentes de LLM | `engine.minds._eligible` reimplementado na instância sem o reino (as 3 vagas vão para as outras tribos) | **pronto** [executado] |
+| Reset do mundo | `engine.reset` envolvido na instância: refunda o reino; as marcas ficam nos objetos, não nos ids | **pronto** [executado] |
+| Marcar o rei no mapa | `LiveState.feature(agent_id, label, kind)` / `unfeature` → `featured` no `/state`; o mapa desenha anel dourado + plaquinha (coroa para `kind="king"`) e ponto no minimapa | **pronto** [executado] |
+| Centralizar o mapa nele | `postMessage({type:"worldbox:focus", id})` do HUD do Arthur para o frame; o mapa só ouve a janela-mãe e só move a vista | **pronto** [executado] |
 | Chat (HTTP) | servidor próprio do Arthur (`arthur/arthur/server.py`, porta 8766, mesmo processo): `/api/state`, `/api/messages`, `/api/send`, `/api/llm`; token + `Host` + `Origin` + limite de corpo | **pronto** [executado] |
 | UI do chat | HUD próprio do Arthur (`arthur/arthur/static/index.html`) com o mapa do jogo num frame; o HUD do jogo fica igual. Alternativa disponível e não usada: painéis genéricos no HUD do jogo (`LiveServer.add_extension`) | **pronto** [executado] |
 | Importar o fork | `arthur/arthur/bridge.py` — único ponto que põe o fork no `sys.path` e importa dele | **pronto** |
@@ -74,7 +79,7 @@ Cada etapa é pequena, testável offline com a mente `mock` e não muda a regres
 |---|---|---|
 | 0 ✅ | **Decisões de produto** — tudo no mais simples, tudo no Gemini (ver abaixo) | feito em 2026-10-21 |
 | 1 ✅ | **Esqueleto do Arthur** — `arthur/run.py` (jogo + Arthur), ponte de import, HUD e servidor próprios, conversa com respostas de teste; o fork ganhou, como recurso genérico opcional, painéis de extensão no HUD | feito em 2026-10-21: chat de ponta a ponta no navegador, `tests/arthur/test_server.py` passa, md5 intacto |
-| 2 | **Reino do Arthur** — fundar o reino no início, Arthur chefe fixo, imortal, reino sem dividir; persona aplicada aos traços dele; **visível no mapa** (sprite de rei + plaquinha "Arthur", via "personagem destacado" genérico no fork) e botão "onde está o rei?" no HUD do Arthur | Arthur aparece como chefe, fácil de achar, e continua chefe por N anos de jogo |
+| 2 ✅ | **Reino do Arthur** — fundar o reino no início, Arthur chefe fixo, imortal, reino sem dividir; persona aplicada aos traços dele; **visível no mapa** (sprite de rei + plaquinha "Arthur", via "personagem destacado" genérico no fork) e botão "onde está o rei?" no HUD do Arthur | feito em 2026-10-21: `tests/arthur/test_kingdom.py` (anos de jogo, fome, ferimento, doença, Smite, colonos, divisão, vagas de LLM, reset), md5 intacto; visto no navegador |
 | 3 | **Mente do Arthur** — a tribo dele decidida por um loop próprio (persona + contexto), demais tribos como hoje | políticas com justificativa, com `mock` e com Gemini |
 | 4 | **Chat do conselheiro** — rota + UI; conselho vira item de agenda do próximo conselho | Arthur responde em personagem; pode recusar; o chat não muda o mundo diretamente |
 | 5 | **Memória, confiança, conhecimento limitado** | conselhos e consequências lembrados; Arthur não sabe o que não viu |

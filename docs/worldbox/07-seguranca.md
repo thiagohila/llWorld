@@ -33,6 +33,8 @@ As rotas genéricas de extensão do jogo, `/ext` e `/ext/<id>/<ação>`, nascera
 
 O **servidor do Arthur** (`arthur/arthur/server.py`, porta 8766) segue o mesmo modelo, com o header `X-Arthur-Token` e um token próprio. **[executado]** `tests/arthur/test_server.py`: sem token, token errado, `Host` de fora, `Origin` de fora — inclusive a do mapa do jogo — e corpo grande → recusados.
 
+O **foco por mensagem** do mapa (`live.html`, etapa 2) é a única entrada nova entre os dois: o mapa aceita `postMessage` só da própria janela-mãe (`e.source === window.parent`, e nada quando aberto sozinho), só do tipo `worldbox:focus` com um `id` numérico de uma pessoa que ele mesmo marca, e o efeito é só mover a vista — nada é enviado ao servidor. O HUD do Arthur manda a mensagem com a origem do jogo como destino. **[código]**
+
 As rotas antigas do jogo continuam sem proteção (abaixo).
 
 ## Mitigações possíveis (não aplicadas às rotas antigas)

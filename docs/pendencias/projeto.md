@@ -16,7 +16,7 @@ Formato: `- [ ] **título** — detalhe.` · Prioridade: 🔴 alta · 🟡 médi
 
 - [x] 🔴 **Etapa 0 — decisões de produto** — tudo na opção mais simples, tudo no Gemini (2026-10-21; ver seções abaixo).
 - [x] 🔴 **Etapa 1 — esqueleto do Arthur** — `arthur/run.py` (jogo + Arthur no mesmo processo), `arthur/arthur/bridge.py`, HUD e servidor próprios (`server.py`, `static/index.html`), conversa com respostas de teste. No fork, painéis de extensão genéricos (opcionais, não usados pelo Arthur). 2026-10-21.
-- [ ] 🟡 **Etapa 2 — reino do Arthur** — fundar o reino, chefe fixo, persona.
+- [x] 🟡 **Etapa 2 — reino do Arthur** — reino fundado no dia zero, Arthur chefe fixo e imortal (imune a Smite e doenças), reino sem dividir nem dissolver (colonos se ficar sozinho), fora das vagas de LLM, traços da persona (`arthur/arthur/persona.py`), plaquinha no mapa e "Onde está o rei?". 2026-10-21.
 - [ ] 🟡 **Etapa 3 — mente do Arthur** — loop próprio de decisão para a tribo dele; revisar antes o rascunho de design.
 - [ ] 🟡 **Etapa 4 — chat do conselheiro** — rota segura + UI; conselho vira agenda, nunca muda o mundo direto.
 - [ ] ⚪ **Etapa 5 — memória, confiança, conhecimento limitado.**
@@ -27,7 +27,8 @@ Formato: `- [ ] **título** — detalhe.` · Prioridade: 🔴 alta · 🟡 médi
 - [ ] ⚪ **Mapa embutido no HUD do Arthur** — hoje é um iframe com a página inteira do jogo (8765), HUD completo espremido ao lado do painel do Arthur. Ideia preferida: "modo embutido" na página do jogo (ex.: `?embed=1`, esconde painéis e deixa o mapa, talvez os poderes) — mudança pequena e genérica no fork. Alternativas: duas abas sem iframe; ou o Arthur desenhar o próprio mapa a partir do `/state` (duplica renderizador — evitar). Anotado em 2026-10-21; "ótimo por hora".
 
 - [x] 🟡 **Consumo de LLM por propósito** — aba **LLMs** no HUD do Arthur (2026-10-21): fontes, propósitos (tribos, narrador, conversa do Arthur, decisões do Arthur) com estado, controle e consumo, e total; interruptor geral + interruptor próprio da conversa + teto. O narrador do jogo passou a contar o próprio uso (`ai/narrator.py:usage_snapshot`). Quando o Arthur usar LLM, os números dele já aparecem separados.
-- [ ] 🟡 **Como achar o rei no mapa** (etapa 2) — sprite próprio de rei (coroa maior + capa) e plaquinha "Arthur" sobre ele, via recurso genérico do fork de "personagem destacado" (nome + visual especial no `/state`; o Arthur só marca o agente dele); botão "onde está o rei?" no HUD do Arthur. Arte: pedir ao Claude Design uma linha "Rei" 9×11 no `people.png` (mesmo magenta); até lá, versão gerada por código.
+- [x] 🟡 **Como achar o rei no mapa** (etapa 2) — "personagem destacado" genérico no fork (`LiveState.feature`): anel dourado, plaquinha "Arthur" com coroa e ponto no minimapa; botão "Onde está o rei?" no HUD do Arthur. 2026-10-21.
+- [ ] ⚪ **Sprite próprio de rei** — hoje ele usa o sprite de chefe (coroa pequena do `overlays.png`) mais a plaquinha. Se quiser mais: pedir ao Claude Design uma linha "Rei" 9×11 no `people.png` (coroa maior + capa, mesmo magenta).
 
 ## Decisões de arquitetura
 

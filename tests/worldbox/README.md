@@ -16,8 +16,9 @@ for t in tests/worldbox/test_*.py; do .venv/bin/python -I -B "$t" "$PWD/worldbox
 | `test_ai_controls.py` | LLM em tempo real: desligar/ligar (sem chamadas, políticas mantidas, narrador recusado, evento), teto por minuto em runtime vs `.env`, esquecer decisões, preferências sobrevivem ao reset |
 | `test_extensions.py` | rotas genéricas `/ext` do jogo com uma extensão de eco: token, `Host`, `Origin`, tamanho, repasse de GET/POST, erro sem vazar detalhes |
 | `test_smite.py` | Smite mata todos no raio na hora, sem contar como morte em guerra |
+| `test_featured.py` | `found_tribe`/`settle_people` (tribo, chefe, acampamento, casas, sem evento), pessoas destacadas no `/state` (posição, cor, rótulo cortado, mortos saem, `unfeature`), botão de fundar do mapa intacto |
 
-Testes do Arthur: `tests/arthur/test_server.py` — recebe o caminho de `arthur/`: `.venv/bin/python -I -B tests/arthur/test_server.py "$PWD/arthur"`.
+Testes do Arthur (`tests/arthur/`) recebem o caminho de `arthur/`: `for t in tests/arthur/test_*.py; do .venv/bin/python -I -B "$t" "$PWD/arthur" | tail -1; done`. `test_server.py` cobre o servidor e o HUD; `test_kingdom.py`, o reino (etapa 2).
 
 Regressão da simulação (não é teste unitário): md5 em `docs/worldbox/05-executar-e-testar.md`.
 Medições de performance: `tools/perf/` (benchmarks, profiling, memória, envelhecimento, checagem de PNG).

@@ -35,6 +35,12 @@ header p{margin:2px 0 0;color:var(--ink3);font-size:11.5px}
 .stat.wide{grid-column:span 3;display:flex;justify-content:space-between;align-items:baseline}
 .stat.wide b{font-size:13px;color:var(--gold)}
 
+#king{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line)}
+#king .who{flex:1;min-width:0;line-height:1.45}
+#king .who b{color:var(--gold);font-size:13.5px}
+#king .who div{font-family:var(--mono);font-size:10.5px;color:var(--ink2)}
+#findKing{font-family:var(--mono);font-size:11px;background:var(--gold2);border-color:#6A5420;color:var(--gold);white-space:nowrap}
+#findKing:disabled{opacity:.45;cursor:default}
 #llm{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10.5px;color:var(--ink2)}
 #llmBtn{font-family:var(--mono);font-size:11px;letter-spacing:.06em;background:rgba(134,188,255,.10);border-color:#2F4A6E;color:var(--mind)}
 #llmBtn.off{background:var(--panel2);border-color:var(--line);color:var(--ink3);text-decoration:line-through}
@@ -108,6 +114,10 @@ form button{background:var(--gold2);border-color:#6A5420;color:var(--gold);font-
       <div class="stat"><b id="sTribes">–</b><span>Tribos</span></div>
       <div class="stat wide"><span>Era</span><b id="sEra">–</b></div>
     </section>
+    <section id="king" aria-label="O rei">
+      <div class="who"><b id="kName">–</b><div id="kRealm">–</div><div id="kInfo">–</div></div>
+      <button id="findKing" type="button" disabled title="Centraliza o mapa no rei">Onde está o rei?</button>
+    </section>
     <section id="llm">
       <button id="llmBtn" type="button" title="Liga/desliga as chamadas de LLM — do Arthur e das tribos">LLM</button>
       <div id="llmInfo">–</div>
@@ -127,7 +137,7 @@ form button{background:var(--gold2);border-color:#6A5420;color:var(--gold);font-
 <script>
 (function(){
 "use strict";
-var TOKEN="__ARTHUR_TOKEN__",since=-1,seen={},paused=false;
+var TOKEN="__ARTHUR_TOKEN__",since=-1,seen={},paused=false,king=null;
 function $(id){return document.getElementById(id)}
 function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;")}
 function api(path,body){
@@ -140,12 +150,25 @@ function fmtDay(d){return "A"+Math.floor(d/365)+" · d"+(d%365)}
 function pollState(){api("/api/state").then(function(s){if(!s.ok)return;var w=s.world,l=s.llm;
   $("sYear").textContent=w.year;$("sPop").textContent=w.population.toLocaleString("pt-BR");
   $("sTribes").textContent=w.tribes;$("sEra").textContent=w.era||"–";
+  renderKing(s.king);
   paused=l.paused;var b=$("llmBtn");
   b.textContent=!l.available?"LLM —":(l.paused?"LLM off":"LLM on");b.classList.toggle("off",l.paused);b.classList.toggle("none",!l.available);
   $("llmInfo").innerHTML=!l.available?"Nenhuma fonte de LLM ativa (.env ou --no-ai).":
     (l.halted?'<span style="color:var(--bad)">Parado: '+esc(l.halted)+'</span>':
     (l.paused?"Chamadas desligadas: o rei e as tribos não pensam com LLM.":"chamadas "+l.calls+" · "+l.perMinute+"/"+l.cap+" por minuto"));
 }).catch(function(){})}
+
+function renderKing(k){king=k&&k.ok?k:null;$("findKing").disabled=!king;
+  if(!king){$("kName").textContent="Sem rei";$("kRealm").textContent="–";$("kInfo").textContent="–";return}
+  $("kName").textContent=(king.title==="King"?"Rei ":"")+king.name;
+  $("kRealm").textContent=king.realm+(king.seat?" · "+king.seat+(king.seatLevel?" ("+king.seatLevel+")":""):"");
+  $("kInfo").textContent=king.people+" pessoas · reina há "+king.years.toLocaleString("pt-BR")+" anos · saúde "+king.health+
+    (king.ill?" · doente":"")+(king.chief?"":" · sem a chefia!");
+}
+/* The map is another origin (the game's port), so it is asked by message;
+   it only knows how to centre on a person it marks itself. */
+$("findKing").addEventListener("click",function(){if(!king)return;
+  var f=$("gameFrame");try{f.contentWindow.postMessage({type:"worldbox:focus",id:king.id},new URL(f.src).origin)}catch(e){}});
 
 function pollMessages(){return api("/api/messages?since="+since).then(function(d){if(!d||!d.ok)return;
   var log=$("log"),stick=log.scrollTop+log.clientHeight>=log.scrollHeight-24,fresh=false;

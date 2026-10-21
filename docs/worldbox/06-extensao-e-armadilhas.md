@@ -14,6 +14,8 @@
 | `MindDirector.usage_snapshot()` / `.halted` / `.call_cap()` | uso e estado das mentes, para relatórios ou para dividir o teto com outro loop de LLM | **[código]** |
 | `engine.events.subscribe(fn)` vê eventos `SYSTEM` | poderes e mensagens do sistema, que o feed HTTP (`LOGGED_KINDS`) não mostra | **[código]** |
 | `LiveServer.add_extension(ext)` | painel no HUD + rotas `/ext/<id>/<ação>` protegidas, com a lógica fora do jogo; `ext` tem `id`, `describe()`, `handle(action, payload)`. `handle` roda sem o lock: pegue `runner.lock` para ler o mundo e nunca o segure durante rede | **[código]** (disponível; o Arthur não usa — tem HUD e servidor próprios) |
+| `society.founding.found_tribe` / `settle_people` | plantar uma tribo (com acampamento) ou juntar gente a uma, de fora das regras; quem chama segura o `runner.lock` e conta a história (não registra evento) | **[código]** (usado pelo `/found` e pelo reino do Arthur) |
+| `LiveState.feature(agent_id, label, kind)` / `unfeature` | marca uma pessoa no mapa (anel + plaquinha; `kind="king"` põe coroa) e a lista em `featured` no `/state`; uma janela-mãe pode pedir ao mapa para centralizar nela (`postMessage({type:"worldbox:focus", id})`) | **[código]** (usado pelo Arthur) |
 | `rules.py` (`WEIGHTS`, `@scorer`) | mudar comportamento base — **é edição do fork** | **[código]** |
 
 Padrão para qualquer código com LLM: snapshot sob `runner.lock` → chamada fora do lock/thread → resultado aplicado dentro do `tick`. Nunca chamar LLM dentro de `step()` nem mutar `engine.*` a partir de thread de rede.

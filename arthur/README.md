@@ -20,6 +20,8 @@ arthur/
   run.py                entrypoint: jogo (8765) + Arthur (8766) no mesmo processo
   arthur/
     bridge.py           único ponto que importa o fork (põe ../worldbox no sys.path)
+    persona.py          quem é o Arthur (nome, reino, idade, traços)
+    kingdom.py          o reino no mundo: fundação, regras do rei, marca no mapa
     advisor.py          a conversa com o rei
     server.py           servidor do Arthur: página + /api protegida
     static/index.html   HUD do Arthur
@@ -42,7 +44,7 @@ python arthur/run.py --no-open --port 8765 --arthur-port 8766
 | Rota | Faz |
 |---|---|
 | `GET /` | HUD (com o token e a URL do mapa do jogo injetados) |
-| `GET /api/state` | ano, era, população, tribos, guerras; estado do LLM (disponível, ligado, chamadas, teto) |
+| `GET /api/state` | ano, era, população, tribos, guerras; estado do LLM (disponível, ligado, chamadas, teto); o rei (`king`: id, posição, saúde, reino, sede, povo, anos de reinado, se é o chefe) |
 | `GET /api/messages?since=` | mensagens da conversa depois do id `since` |
 | `POST /api/send` `{text}` | manda uma mensagem ao rei; a resposta chega por `/api/messages` |
 | `POST /api/llm` `{value: on\|off\|toggle, target: all\|arthur_chat}` | `all` (padrão): interruptor geral do jogo (tribos, narrador e Arthur); `arthur_chat`: só a conversa do Arthur |
@@ -52,18 +54,32 @@ python arthur/run.py --no-open --port 8765 --arthur-port 8766
 
 ## HUD
 
+- **O rei:** nome, reino e sede, povo, anos de reinado e saúde; botão **Onde está o rei?** centraliza o mapa nele (por `postMessage`, já que o mapa é outra origem).
 - **Conversa:** o chat com o rei.
 - **LLMs:** mapa de quais LLMs existem, para que servem e quanto consomem; interruptor geral, interruptor próprio da conversa do Arthur e teto por minuto. Atualiza a cada 2 s com a aba aberta.
 - O botão "LLM" no topo do painel é o interruptor geral, o mesmo do botão AI do mapa do jogo.
 
 ## Estado
 
-**Etapa 1:** HUD e servidor próprios funcionando de ponta a ponta; as respostas vêm de um substituto offline (`advisor.placeholder_reply`), sem LLM. O rei de verdade (reino, persona, Gemini, decisões) chega nas etapas 2–4.
+**Etapa 1:** HUD e servidor próprios funcionando de ponta a ponta; as respostas vêm de um substituto offline (`advisor.placeholder_reply`), sem LLM.
+
+**População inicial:** o mundo do Arthur começa com **50** pessoas soltas (`INITIAL_POPULATION` em `run.py`; o padrão do jogo é 100) mais as 10 do reino — 60 no dia zero. O jogo rodado sozinho continua com 100.
+
+**Etapa 2 — o reino** (`kingdom.py`): no dia zero o "Kingdom of Arthur" é fundado no lugar mais fértil de uma amostra tirada da seed (mesma seed, mesmo lugar), com sede em Camelot e 10 pessoas. Tudo sem editar as regras do jogo, ajustando de fora e só para objetos marcados:
+
+- **Arthur Pendragon, chefe fixo** — a escolha de chefe do jogo devolve sempre ele na tribo dele.
+- **Imortal** — saúde nunca abaixo de 1 (nem dentro do combate, para ninguém ganhar um abate falso), imune a todas as doenças, idade fixa em 30 anos; o Smite do mapa desvia dele. Nenhuma morte é registrada para ele.
+- **Um reino só** — não se divide nem se dissolve; se só o rei sobrar, chegam 6 colonos.
+- **Fora das LLMs por enquanto** — segue as regras normais e não ocupa uma das vagas de LLM (as outras tribos ficam com elas). A mente própria do Arthur é a etapa 3.
+- **No mapa** — anel dourado, plaquinha "Arthur" com coroa e ponto no minimapa (recurso genérico do jogo, `LiveState.feature`).
+- **Reset do mundo** refunda o reino.
+
+O rei ainda não pensa nem conversa de verdade: isso chega nas etapas 3–4.
 
 ## Testes
 
 ```bash
-.venv/bin/python -I -B tests/arthur/test_server.py "$PWD/arthur"
+for t in tests/arthur/test_*.py; do .venv/bin/python -I -B "$t" "$PWD/arthur" | tail -1; done
 ```
 
-Sobe os dois servidores em portas de teste e cobre token, `Host`, `Origin` (inclusive a do mapa do jogo), tamanho do corpo, ida e volta da mensagem, interruptor de LLM compartilhado e o jogo intacto na própria porta.
+`test_kingdom.py` cobre o reino: fundação no dia zero, mesma seed → mesmo lugar, anos de jogo, fome, ferimento, doença, Smite, colonos, divisão, vagas de LLM e reset. `test_server.py` sobe os dois servidores em portas de teste e cobre token, `Host`, `Origin` (inclusive a do mapa do jogo), tamanho do corpo, ida e volta da mensagem, interruptor de LLM compartilhado e o jogo intacto na própria porta.
