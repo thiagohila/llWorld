@@ -25,7 +25,7 @@ Fonte única das versões do projeto. Atualize aqui quando algo mudar e registre
 | Fork `worldbox/` (submódulo) | `bbbea3a` (2026-10-21; 9 commits à frente do upstream), `git@github.com:thiagohila/worldbox.git`, branch `main`; versão do pacote `0.1.0` |
 | Upstream do fork | `https://github.com/ryfcx/worldbox` (remote `upstream` no submódulo) — mesmo commit `4579b3c` em 2026-10-20 |
 | Docs de referência do fork | descrevem `bbbea3a` |
-| `arthur/` | etapa 1 (esqueleto): `arthur/run.py`, pacote `arthur` 0.1.0, só stdlib |
+| `arthur/` | etapas 1–3 (esqueleto, reino, mente do rei): `arthur/run.py`, pacote `arthur` 0.1.0, só stdlib; mundo começa com 50 pessoas + 10 do reino |
 
 ## Serviços externos (opcionais)
 
@@ -47,6 +47,7 @@ Opções grátis (Groq, Gemini, OpenRouter `:free`, Ollama local) e limites: `wo
 | Porta | Uso |
 |---|---|
 | `127.0.0.1:8765` | mapa ao vivo (tenta até 8772 se ocupada) |
+| `127.0.0.1:8766` | HUD do Arthur (`arthur/run.py`; tenta as seguintes se ocupada) |
 | `*:8765` | também ocupada pelo OrbStack nesta máquina → acessar por `127.0.0.1`, não `localhost` |
 
 ## Montar do zero
@@ -60,6 +61,10 @@ cd worldbox
 cp .env.example .env                   # opcional: chaves de LLM
 PYTHONDONTWRITEBYTECODE=1 python -m worldbox.main --no-ai --days 3000 --seed 42 | md5
 # esperado: 46183c8d284315695c7706c0f923745a (sem chaves no ambiente)
+cd ..
+python arthur/run.py --no-ai                 # jogo (8765) + HUD do Arthur (8766)
+for t in tests/worldbox/test_*.py; do .venv/bin/python -I -B "$t" "$PWD/worldbox" | tail -1; done
+for t in tests/arthur/test_*.py; do .venv/bin/python -I -B "$t" "$PWD/arthur" | tail -1; done
 ```
 
 ## Verificar versões

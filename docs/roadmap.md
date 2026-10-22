@@ -15,6 +15,8 @@ Roda como veio do `ryfcx/worldbox`, com melhorias pontuais — nenhuma regra de 
 | Performance | −27–33% de custo por dia; velocidades viraram taxas reais | `bfe84cd` |
 | IA das tribos | fontes grátis por `.env` (Gemini testado), mente offline `mock`, controle de custo, backoff, contadores no HUD | `d6472e1` |
 | Correções | Smite matava 0 de 14 (agora mata), narrador só com DeepSeek, política `{}` | `d6472e1` |
+| LLM em jogo | interruptor, teto por minuto e nº de tribos (3) ajustáveis; selo azul nas tribos com LLM | `e405b54`, `e228169` |
+| Para o Arthur | pessoas destacadas no mapa (`LiveState.feature`) + foco por mensagem; fundação de tribo reutilizável (`society/founding.py`) | `bbbea3a` |
 
 Ainda em aberto no jogo: segurança do servidor local (CSRF, DNS rebinding), determinismo com duas chaves, sem suíte de testes — ver `pendencias/jogo.md`.
 
@@ -87,10 +89,12 @@ Cada etapa é pequena, testável offline com a mente `mock` e não muda a regres
 | 5 | **Memória, confiança, conhecimento limitado** | conselhos e consequências lembrados; Arthur não sabe o que não viu |
 | 6 | **Avaliação** pelos critérios da visão §11 | cenários roteirizados passam |
 
-Design detalhado das etapas 3–5 (camadas de contexto, contratos de saída, confiança): `rascunhos/arthur-design.md` — revisar antes da etapa 3.
+Design detalhado das etapas 3–5 (camadas de contexto, contratos de saída, confiança): `rascunhos/arthur-design.md`. A etapa 3 usou só a parte do conselho, em versão mínima; revisar conversa, memória e confiança antes das etapas 4–5.
+
+**Próxima — etapa 4 (chat do conselheiro), proposta:** Arthur responde em personagem, em português, pelo Gemini, sabendo do reino e das próprias decisões (com justificativa); concorda, considera ou recusa; o conselho vira item que ele pesa na próxima decisão (conselho urgente pode antecipá-la); a conversa nunca muda o mundo direto. Mesmo interruptor e teto; o interruptor próprio da conversa passa a valer. Só as últimas trocas entram no contexto (memória longa é etapa 5).
 
 ## Cuidados
 
-- **Orçamento de LLM:** o plano grátis tem limite por minuto e por dia, e o Gemini oscila (503). Desenvolver com `mock`; com IA real, Arthur e tribos dividem o mesmo teto — talvez reduzir `max_minds` quando Arthur estiver ativo.
+- **Orçamento de LLM:** o plano grátis tem limite por minuto e por dia, e o Gemini oscila (503 em rajadas — visto de novo na etapa 3). Desenvolver com `mock`; com IA real, Arthur e as 3 tribos dividem o mesmo teto por minuto. Com a conversa (etapa 4), cada mensagem é uma chamada a mais.
 - **Segurança:** o chat não pode herdar os problemas do servidor do fork (CSRF, DNS rebinding).
 - **Testes:** cenários por seed com `mock` são reprodutíveis; com LLM real, não.

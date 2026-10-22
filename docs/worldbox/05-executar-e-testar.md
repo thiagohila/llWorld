@@ -4,7 +4,7 @@
 
 Versões completas e montagem do zero: `../ambiente.md`.
 
-- Python do projeto: **3.14** (Homebrew), numa `.venv` na raiz do llWorld, compartilhada pelo jogo e pelo futuro Arthur. O jogo exige 3.10+ e não tem dependências.
+- Python do projeto: **3.14** (Homebrew), numa `.venv` na raiz do llWorld, compartilhada pelo jogo e pelo Arthur. O jogo exige 3.10+ e não tem dependências.
 - **[executado]** Testado em 3.10.15, 3.12.15 e 3.14.6: mesmo resultado (md5 abaixo). O 3.14 foi o mais rápido (~30 s para 3000 dias, contra ~57 s no 3.10) e roda sem `DeprecationWarning`.
 - **[executado]** O `python3` global do pyenv é 3.8.13 e quebra ao importar `ssl` (falta OpenSSL 1.1) — não usar. A `.venv` contorna isso.
 

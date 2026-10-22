@@ -9,7 +9,7 @@ O conselheiro do Rei Arthur, construído **ao lado** do jogo (`../worldbox`, o f
 | mundo, regras, simulação, mentes das tribos | conversa com o rei, persona, chamadas de LLM, decisões |
 | HUD e mapa ao vivo (iguais aos de sempre) | HUD próprio, com o mapa do jogo num frame ao lado |
 | interruptor e teto de LLM (`engine.minds`) | usa o mesmo interruptor e teto (botão "LLM" no HUD do Arthur) |
-| aplica decisões no formato que já valida (`TribePolicy`) | propõe as decisões do rei (etapas 3+) |
+| aplica decisões no formato que já valida (`TribePolicy`) | decide a política do reino (`council.py`), no formato do jogo |
 
 Os dois rodam no mesmo processo e compartilham o mesmo mundo (lendo sob `runner.lock`). O jogo nunca importa nada daqui; todo acesso ao jogo passa por `arthur/bridge.py`. O jogo também tem um mecanismo genérico de painéis (`LiveServer.add_extension`) que o Arthur **não** usa.
 
@@ -63,7 +63,7 @@ python arthur/run.py --no-open --port 8765 --arthur-port 8766
 
 ## Estado
 
-**Etapa 1:** HUD e servidor próprios funcionando de ponta a ponta; as respostas vêm de um substituto offline (`advisor.placeholder_reply`), sem LLM.
+**Etapa 1:** HUD e servidor próprios funcionando de ponta a ponta. A conversa ainda responde com um texto de teste (`advisor.placeholder_reply`), sem LLM, até a etapa 4.
 
 **População inicial:** o mundo do Arthur começa com **50** pessoas soltas (`INITIAL_POPULATION` em `run.py`; o padrão do jogo é 100) mais as 10 do reino — 60 no dia zero. O jogo rodado sozinho continua com 100.
 
@@ -72,7 +72,7 @@ python arthur/run.py --no-open --port 8765 --arthur-port 8766
 - **Arthur Pendragon, chefe fixo** — a escolha de chefe do jogo devolve sempre ele na tribo dele.
 - **Imortal** — saúde nunca abaixo de 1 (nem dentro do combate, para ninguém ganhar um abate falso), imune a todas as doenças, idade fixa em 30 anos; o Smite do mapa desvia dele. Nenhuma morte é registrada para ele.
 - **Um reino só** — não se divide nem se dissolve; se só o rei sobrar, chegam 6 colonos.
-- **Fora das LLMs por enquanto** — segue as regras normais e não ocupa uma das vagas de LLM (as outras tribos ficam com elas). A mente própria do Arthur é a etapa 3.
+- **Fora das vagas de LLM das tribos** — as 3 vagas ficam com as outras tribos; o reino é decidido pela mente do próprio Arthur (etapa 3, abaixo).
 - **No mapa** — anel dourado, plaquinha "Arthur" com coroa e ponto no minimapa (recurso genérico do jogo, `LiveState.feature`).
 - **Reset do mundo** refunda o reino.
 

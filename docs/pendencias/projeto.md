@@ -39,7 +39,8 @@ Regra geral (Thiago, 2026-10-21): **tudo na opção mais simples para este iníc
 - [x] 🔴 **Estratégia para mudanças no fork** — preferir contornar por fora (patch/subclasse no Arthur); gancho mínimo no fork só quando não houver outro jeito. 2026-10-21.
 - [ ] 🟡 **Correções do fork (`jogo.md`)** — decidir caso a caso, quando cada uma atrapalhar a próxima etapa.
 - [x] 🟡 **Como o `arthur/` importa o fork** — `sys.path` num único ponto do entrypoint. 2026-10-21.
-- [ ] 🟡 **Rascunho de design da IA** — revisar `docs/rascunhos/arthur-design.md` antes da etapa 3, simplificando para a v1.
+- [x] 🟡 **Rascunho de design da IA (parte do conselho)** — a etapa 3 usou a versão mínima: só o loop de conselho, sem memória/agenda/confiança. 2026-10-21.
+- [ ] 🟡 **Rascunho de design da IA (conversa, memória, confiança)** — revisar as seções 4, 5 (loop de conversa) e 7 de `docs/rascunhos/arthur-design.md` antes das etapas 4–5, simplificando para a v1.
 
 ## Decisões de produto (protótipo do Arthur)
 
@@ -54,6 +55,8 @@ Decididas em 2026-10-21 pela regra "o mais simples" — ver `../roadmap.md`.
 - [x] ⚪ **Idioma** — Arthur conversa em português (prompt e resposta); as mentes das tribos continuam como no fork.
 - [x] ⚪ **Modelo de LLM** — tudo no Gemini (`gemini-3.1-flash-lite`, via `.env`); `mock` só para desenvolver e testar.
 - [x] 🟡 **Orçamento de LLM com Arthur ativo** — um teto só, compartilhado entre Arthur e tribos (`MindDirector.call_cap`).
+- [x] 🟡 **População inicial** — o mundo do Arthur começa com 50 pessoas soltas + 10 do reino (o jogo sozinho segue com 100). 2026-10-21.
+- [x] 🟡 **Como o rei decide (etapa 3)** — a cada 40 dias de jogo + gatilhos (guerra começa/termina, celeiro < 25%, sem política); linha vermelha por regra (sem guerra contra quem está em paz); frase em inglês (log do jogo), justificativa em português (HUD); interruptor próprio além do geral. 2026-10-21.
 - [x] 🟡 **UI do chat** — HUD e servidor próprios do Arthur (porta 8766), com o mapa do jogo num frame; conversa, persona, LLM e decisões ficam no Arthur. Decidido em 2026-10-21 (passou por "painel no HUD do jogo" e voltou para separado).
 
 ## Qualidade e processo

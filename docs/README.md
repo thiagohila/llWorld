@@ -9,6 +9,7 @@
 ## Estado e plano
 
 - `roadmap.md` — estado atual, contrato de interfaces entre `worldbox` e Arthur, próximas etapas.
+- `../arthur/README.md` — o Arthur por dentro: reino, regras do rei, mente (conselho), HUD, API, testes.
 
 ## Ambiente
 
@@ -34,7 +35,7 @@
 
 ## Rascunhos
 
-- `rascunhos/arthur-design.md` — ideias de design para a camada do Arthur (contexto, contratos, confiança). **Não aprovado**; revisar antes da etapa 3 do roadmap.
+- `rascunhos/arthur-design.md` — ideias de design para a camada do Arthur (contexto, contratos, confiança). **Não aprovado.** A etapa 3 usou uma versão mínima (nota no topo); revisar as seções de conversa, memória e confiança antes das etapas 4–5.
 
 ## Convenções destes docs
 

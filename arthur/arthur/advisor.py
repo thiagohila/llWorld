@@ -43,13 +43,14 @@ class Message:
 
 
 def placeholder_reply(text: str, context: Dict[str, Any]) -> str:
-    """Stage 1 stand-in for Arthur: proves the round trip, decides nothing."""
+    """Stand-in reply until the conversation gets its LLM (stage 4): proves the
+    round trip, says nothing it does not know."""
     quoted = text if len(text) <= 80 else text[:77] + "..."
     return (
         f"(teste) Ouvi seu conselho: “{quoted}”. "
         f"Estamos no ano {context['year']}, com {context['population']} almas no mundo "
-        f"e {context['tribes']} tribos. Ainda não governo reino algum — "
-        "esta é só a etapa 1, sem LLM."
+        f"e {context['tribes']} tribos. Ainda não converso de verdade — "
+        "isso chega na etapa 4; minhas decisões estão na aba Decisões."
     )
 
 
@@ -83,7 +84,8 @@ class Advisor:
             "messages": 0, "replies": 0, "llm_calls": 0, "failures": 0,
             "tokens_in": 0, "tokens_out": 0,
         }
-        self._add("system", "Etapa 1: o canal de conversa funciona; o Arthur de verdade chega nas próximas etapas.")
+        self._add("system", "O canal de conversa funciona, mas o rei ainda responde com um texto de teste: "
+                            "a conversa de verdade chega na etapa 4. Ele já governa — veja a aba Decisões.")
 
     # -- protocol (Arthur's server; also the game's extension protocol)
 

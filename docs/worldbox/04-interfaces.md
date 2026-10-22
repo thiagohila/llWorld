@@ -11,12 +11,12 @@ Nenhuma interface muda regras: todas leem o motor por `runner.lock`. As únicas 
 |---|---|
 | `/` | página (`static/live.html`, relida do disco a cada request) |
 | `/world` | terreno e dimensões, buscado uma vez |
-| `/state?since=` | snapshot: agentes, tribos, mentes, assentamentos, log; `ai.usage` = chamadas, por minuto/teto, puladas, falhas, tokens, `halted`; polling a cada 500 ms |
+| `/state?since=` | snapshot: agentes, tribos, mentes, assentamentos, log; `ai.usage` = chamadas, por minuto/teto, puladas, falhas, tokens, `halted`; `featured` = pessoas destacadas (`id`, `label`, `kind`, `x`, `y`, `color`); polling a cada 500 ms |
 | `/inspect?x=&y=` | detalhe de um tile |
 | `/overlay?kind=` | camada (fertilidade etc.), a cada 4 s |
 | `/explain` | narrador; **solta o lock antes da chamada de rede** |
 | `/act?tool=&x=&y=&radius=` | ferramentas de deus (quebram determinismo); responde `affected`. Smite mata na hora (desde `d6472e1`) |
-| `/found?x=&y=&name=&house=&people=` | planta uma civilização com provedor escolhido |
+| `/found?x=&y=&name=&house=&people=` | planta uma civilização com provedor escolhido (lógica em `society/founding.py:found_tribe`) |
 | `/control?action=&value=` | pause, resume, speed; `ai` (on/off/toggle), `ai_cap` (N ou vazio), `ai_forget` — ver `03-ia.md` → Controle em tempo real. Responde `aiPaused` e `aiCap` |
 | `/ext` | manifesto das extensões registradas de fora (`LiveServer.add_extension`); exige o token |
 | `GET`/`POST /ext/<id>/<ação>` | repassa à extensão (`handle(ação, payload)`); **token** no header `X-Worldbox-Token` + `Host` local + `Origin` local no POST + corpo ≤ 16 KB. O token é gerado por sessão e injetado na página (`__WB_TOKEN__`) |
@@ -34,6 +34,7 @@ Nenhuma interface muda regras: todas leem o motor por `runner.lock`. As únicas 
 - Ao carregar, a página envia ao servidor a velocidade destacada (1×), para não rodar no default de 0,12 s do `config.py`.
 - **Extensões (2026-10-21):** para cada extensão `kind: "chat"` o HUD cria uma aba (antes de History) com um painel de conversa genérico — histórico, "pensando…", caixa de envio — que consulta `/ext/<id>/messages` a cada segundo e envia por `POST /ext/<id>/send`. O fork não sabe o que a extensão é. Recurso genérico e opcional: hoje nenhum projeto registra extensões — o Arthur tem HUD próprio (`arthur/`). O painel da direita termina acima do minimapa (altura medida em JS), para a caixa de texto nunca ficar coberta.
 - **Quem é governado por LLM (2026-10-21):** selo azul com o ícone de mente e o nome da tribo sobre o assentamento (ou centro, se nômade) de cada tribo que segue uma política de LLM agora; com zoom de perto, um pontinho azul sobre a cabeça de cada membro; selo "LLM" na lista de Civs. Com o LLM desligado, o selo fica apagado e diz "LLM off". Fonte: campo `llm` em cada item de `civs` no `/state`.
+- **Pessoas destacadas (2026-10-21):** quem foi marcado com `LiveState.feature` (hoje: o Rei Arthur) ganha anel dourado no tile, plaquinha com o nome (com coroa se `kind="king"`) em qualquer zoom e um ponto dourado no minimapa. Se a página estiver num frame, a janela-mãe pode pedir para centralizar numa delas com `postMessage({type:"worldbox:focus", id})` — o mapa aproxima e o anel pisca; só a janela-mãe é ouvida e só a vista se move.
 - Botão **AI on/off** no topo (ao lado do play) e controles de LLM na aba Minds (ligar/desligar, teto por minuto, esquecer decisões).
 - Atalhos: `Espaço` pausa · `M` liga/desliga LLM · `1`–`6` poderes · `N` fundar · `L` alterna camadas · `F` enquadrar · `+`/`-` zoom · `[`/`]` velocidade · `Esc` cancela.
 
