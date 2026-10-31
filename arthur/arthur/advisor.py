@@ -4,15 +4,17 @@ Arthur's own HUD and server (``arthur.server``) talk to this object; it also
 speaks the game's generic extension protocol (``describe`` / ``handle``), so
 it could be shown inside the game's HUD too, but Arthur does not do that.
 
-Stage 1 (docs/roadmap.md) is the plumbing only: replies come from an offline
-stand-in, so the whole path -- Arthur's HUD, its guarded server, this object
--- is proven without spending any LLM calls. Arthur's persona, Gemini and his
-decisions replace ``placeholder_reply`` in later stages.
+The king answers through ``voice`` (``voice.KingVoice``, stage 4a): his
+persona, his realm's report, his recent decisions and the last exchanges,
+through the council's LLM source. Without an LLM (``--no-ai``, no source, or
+no voice given) an offline stand-in answers, so the whole path -- Arthur's
+HUD, its guarded server, this object -- still works without any calls.
 
 Rules this extension keeps from the start:
 
 * the chat never changes the world; it only reads a little of it;
-* it obeys the game's LLM switch (``engine.minds.paused``);
+* it obeys the game's LLM switch (``engine.minds.paused``), its own switch,
+  the per-minute budget and the quota gate;
 * replies are worked out on their own thread, so neither the HTTP request
   nor the simulation waits for them.
 """
@@ -40,17 +42,18 @@ class Message:
     name: str = ""
     day: Optional[int] = None
     pending: bool = False
+    advice: Optional[Dict[str, Any]] = None  # the king's reading of the advice, if any
 
 
 def placeholder_reply(text: str, context: Dict[str, Any]) -> str:
-    """Stand-in reply until the conversation gets its LLM (stage 4): proves the
-    round trip, says nothing it does not know."""
+    """Stand-in reply when no LLM can answer: proves the round trip, says
+    nothing it does not know."""
     quoted = text if len(text) <= 80 else text[:77] + "..."
     return (
-        f"(teste) Ouvi seu conselho: “{quoted}”. "
+        f"(sem LLM) Ouvi seu conselho: “{quoted}”. "
         f"Estamos no ano {context['year']}, com {context['population']} almas no mundo "
-        f"e {context['tribes']} tribos. Ainda não converso de verdade — "
-        "isso chega na etapa 4; minhas decisões estão na aba Decisões."
+        f"e {context['tribes']} tribos. Para conversar de verdade preciso de uma LLM "
+        "(rodar sem --no-ai, com uma fonte no .env)."
     )
 
 
@@ -65,27 +68,40 @@ class Advisor:
         runner: Any,
         reply: Optional[Reply] = None,
         character: str = "Arthur",
+        voice: Optional[Any] = None,
     ) -> None:
         self.engine = engine
         self.runner = runner
         self.character = character
         self._reply = reply or placeholder_reply
+        self.voice = voice
         self._messages: List[Message] = []
         self._ids = itertools.count(1)
         self._lock = threading.Lock()
         self._busy = False
         # Arthur's own switch for this purpose; the game's switch still wins.
         self.llm_enabled = True
-        # What answers the king, for the LLMs tab. A real backend sets
-        # ``uses_llm`` and ``model`` on its reply function.
-        self.uses_llm = bool(getattr(self._reply, "uses_llm", False))
-        self.model = str(getattr(self._reply, "model", "") or "resposta de teste (sem LLM)")
         self.usage: Dict[str, int] = {
             "messages": 0, "replies": 0, "llm_calls": 0, "failures": 0,
             "tokens_in": 0, "tokens_out": 0,
         }
-        self._add("system", "O canal de conversa funciona, mas o rei ainda responde com um texto de teste: "
-                            "a conversa de verdade chega na etapa 4. Ele já governa — veja a aba Decisões.")
+        if self._live():
+            self._add("system", "Fale com o Rei Arthur. Ele ouve e responde, mas decide sozinho, "
+                                "no conselho dele (aba Decisões).")
+        else:
+            self._add("system", "Sem LLM: o rei responde com um texto de teste. "
+                                "As decisões dele estão na aba Decisões.")
+
+    @property
+    def uses_llm(self) -> bool:
+        return self._live()
+
+    @property
+    def model(self) -> str:
+        return self.voice.model if self._live() else "resposta de teste (sem LLM)"
+
+    def _live(self) -> bool:
+        return self.voice is not None and self.voice.live()
 
     # -- protocol (Arthur's server; also the game's extension protocol)
 
@@ -132,16 +148,26 @@ class Advisor:
             busy = self._busy
         return {"ok": True, "messages": rows, "thinking": busy}
 
-    def _context(self) -> Dict[str, Any]:
-        """The little the stand-in reads from the world, under the game's lock."""
+    def _context(self, live: bool) -> Dict[str, Any]:
+        """What the reply reads from the world, under the game's lock. A live
+        voice also takes the conversation so far and its share of the budget."""
         with self.runner.lock:
             engine = self.engine
-            return {
+            context: Dict[str, Any] = {
                 "day": engine.clock.day,
                 "year": engine.clock.year,
                 "population": len(engine.agents),
                 "tribes": len(engine.groups.active()),
             }
+            if live:
+                context["call"] = self.voice.snapshot(self._history())
+            return context
+
+    def _history(self) -> List[Dict[str, str]]:
+        """Earlier exchanges as chat turns (the voice keeps only the last few)."""
+        with self._lock:
+            rows = [m for m in self._messages if m.role in ("player", "character") and not m.pending and m.text]
+        return [{"role": "user" if m.role == "player" else "assistant", "content": m.text} for m in rows]
 
     def _send(self, raw: Any) -> Dict[str, Any]:
         text = str(raw or "").strip()[:MAX_TEXT]
@@ -151,16 +177,19 @@ class Advisor:
             if self._busy:
                 return {"ok": False, "error": f"{self.character} ainda está respondendo."}
             self._busy = True
-        context = self._context()
-        self._add("player", text, name="Você", day=context["day"])
-        with self._lock:
-            self.usage["messages"] += 1
+        live = self._live()
         silent = None
         if self.engine.minds.paused:
             # The game's LLM switch is off: Arthur stays silent too.
             silent = "As chamadas de LLM estão desligadas (botão AI). Ligue para o rei responder."
         elif not self.llm_enabled:
             silent = "A conversa do Arthur está desligada na aba LLMs. Ligue para o rei responder."
+        elif live:
+            silent = self.voice.blocked() or None
+        context = self._context(live and not silent)
+        self._add("player", text, name="Você", day=context["day"])
+        with self._lock:
+            self.usage["messages"] += 1
         if silent:
             self._add("system", silent)
             with self._lock:
@@ -174,20 +203,32 @@ class Advisor:
         return {"ok": True}
 
     def _answer(self, message_id: int, text: str, context: Dict[str, Any]) -> None:
-        failed = False
+        failed, advice, note, out = False, None, "", {}
         try:
-            reply = self._reply(text, context)
-            role, body = "character", str(reply or "").strip() or "…"
+            if "call" in context:
+                out = self.voice.answer(text, context["call"])
+                body, advice = out["text"], out["advice"]
+                if out["error"]:
+                    # He says he needs time; the panel says why.
+                    failed, note = True, f"A LLM falhou: {out['error']}"
+            else:
+                body = str(self._reply(text, context) or "").strip() or "…"
+            role = "character"
         except Exception as error:  # A failed reply must not wedge the panel.
             failed = True
             role, body = "system", f"{self.character} não conseguiu responder ({type(error).__name__})."
         with self._lock:
             self.usage["replies"] += 0 if failed else 1
             self.usage["failures"] += 1 if failed else 0
-            if self.uses_llm:
+            if "call" in context:
                 self.usage["llm_calls"] += 1
+                self.usage["tokens_in"] += out.get("tokens_in", 0)
+                self.usage["tokens_out"] += out.get("tokens_out", 0)
             for message in self._messages:
                 if message.id == message_id:
                     message.role, message.text, message.pending = role, body, False
+                    message.advice = advice
                     break
             self._busy = False
+        if note:
+            self._add("system", note)

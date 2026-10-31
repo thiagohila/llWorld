@@ -24,7 +24,8 @@ arthur/
     kingdom.py          o reino no mundo: fundação, regras do rei, marca no mapa
     council.py          a mente do rei: decide a política do reino com a LLM
     quota.py            espera quando o provedor recusa por cota (429)
-    advisor.py          a conversa com o rei
+    advisor.py          a conversa com o rei (mensagens, interruptores, histórico)
+    voice.py            a voz do rei: responde ao conselheiro com a LLM
     server.py           servidor do Arthur: página + /api protegida
     static/index.html   HUD do Arthur
 ```
@@ -64,7 +65,7 @@ python arthur/run.py --no-open --port 8765 --arthur-port 8766
 
 ## Estado
 
-**Etapa 1:** HUD e servidor próprios funcionando de ponta a ponta. A conversa ainda responde com um texto de teste (`advisor.placeholder_reply`), sem LLM, até a etapa 4.
+**Etapa 1:** HUD e servidor próprios funcionando de ponta a ponta. Sem LLM (`--no-ai` ou sem fonte), a conversa responde com um texto de teste marcado "(sem LLM)" (`advisor.placeholder_reply`).
 
 **O mundo do Arthur** (`run.py:arthur_config`) difere do jogo padrão em:
 - **População inicial:** **50** pessoas soltas (`INITIAL_POPULATION`; padrão 100) mais as 10 do reino — 60 no dia zero.
@@ -92,7 +93,13 @@ O jogo rodado sozinho continua com o padrão.
 - **Cota esgotada (429):** o rei para de tentar e espera — 1 min, depois 5, 15, 30 e 1 h a cada 429 seguido; qualquer resposta boa zera (`quota.py`, compartilhado com a conversa). O HUD mostra "esperando a cota da LLM (429)" e quando tenta de novo. Motivo: o plano grátis do Gemini esgotou numa noite e o rei insistiu ~230 vezes em vão. As tribos do jogo seguem o próprio ritmo (continuam tentando).
 - **Como chega ao mundo:** o motor lê a política dele por `engine.minds.policy_for`; a diplomacia é empurrada pelo próprio conselho, todo dia, nos mesmos valores das tribos. Ele não ocupa vaga de LLM das tribos (no HUD do jogo, o contador geral de "mentes" passa a incluir o reino, porque lê por `policy_for`).
 
-O rei ainda não conversa de verdade: isso é a etapa 4.
+**Etapa 4a — a voz do rei** (`voice.py`): o rei responde ao conselheiro.
+
+- **O que ele lê:** a persona, o mesmo relatório do conselho (sem as instruções de invenção), as 3 últimas decisões dele com a justificativa, o dia e o ano, e as últimas 6 trocas da conversa. Só sabe o que o relatório diz; se não sabe, diz que não sabe.
+- **O que ele devolve:** `{"reply": "...", "advice": null | {"summary", "verdict": accept|consider|reject|clarify, "urgent"}}`. A resposta em português, em personagem; a leitura do conselho aparece embaixo da fala no HUD ("conselho: … · vai considerar"). Urgente só vale se ele aceita ou considera. Se o modelo ignora o formato mas escreve texto, o texto vale.
+- **Nunca muda o mundo:** conversar não decide nada; ele diz no máximo que vai pesar no próximo conselho. (Etapa 4b: o conselho entra na próxima decisão.)
+- **Custo:** mesmo interruptor geral, mesmo teto por minuto (cada mensagem conta), mesma espera por cota (429) do conselho, mais o interruptor próprio da conversa na aba LLMs. Bloqueado → aviso no chat, sem chamada. Falha da LLM → "Preciso pensar nisso…" em personagem e uma nota com o motivo.
+- **Idioma:** as instruções ao modelo estão em inglês (como no conselho); a fala do rei é em português.
 
 ## Testes
 
@@ -100,4 +107,4 @@ O rei ainda não conversa de verdade: isso é a etapa 4.
 for t in tests/arthur/test_*.py; do .venv/bin/python -I -B "$t" "$PWD/arthur" | tail -1; done
 ```
 
-`test_council.py` cobre a mente (API simulada, sem rede): primeira decisão, cadência, teto compartilhado, interruptores, gatilho de guerra, espera por cota (429), linha vermelha, respostas inválidas, formato do `mock`, "esquecer", erro fatal, resposta velha descartada após reset, `--no-ai`. `test_kingdom.py` cobre o reino: fundação no dia zero, mesma seed → mesmo lugar, anos de jogo, fome, ferimento, doença, Smite, colonos, divisão, vagas de LLM e reset. `test_server.py` sobe os dois servidores em portas de teste e cobre token, `Host`, `Origin` (inclusive a do mapa do jogo), tamanho do corpo, ida e volta da mensagem, interruptor de LLM compartilhado e o jogo intacto na própria porta.
+`test_voice.py` cobre a conversa (API simulada): resposta, prompt (persona, relatório, decisões), histórico limitado, leitura do conselho, formato ignorado, falhas, teto, cota, interruptores, erro fatal, `--no-ai`. `test_council.py` cobre a mente (API simulada, sem rede): primeira decisão, cadência, teto compartilhado, interruptores, gatilho de guerra, espera por cota (429), linha vermelha, respostas inválidas, formato do `mock`, "esquecer", erro fatal, resposta velha descartada após reset, `--no-ai`. `test_kingdom.py` cobre o reino: fundação no dia zero, mesma seed → mesmo lugar, anos de jogo, fome, ferimento, doença, Smite, colonos, divisão, vagas de LLM e reset. `test_server.py` sobe os dois servidores em portas de teste e cobre token, `Host`, `Origin` (inclusive a do mapa do jogo), tamanho do corpo, ida e volta da mensagem, interruptor de LLM compartilhado e o jogo intacto na própria porta.

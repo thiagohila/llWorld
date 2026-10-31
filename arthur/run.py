@@ -22,6 +22,7 @@ from arthur.advisor import Advisor
 from arthur.bridge import Config, LiveServer, SimulationEngine, SimulationRunner
 from arthur.kingdom import Kingdom
 from arthur.server import ArthurServer
+from arthur.voice import KingVoice
 
 INITIAL_POPULATION = 50  # people scattered at the start, before any tribe
 # People live in houses spread over their tribe's land, and roam further from
@@ -55,7 +56,7 @@ def build(seed: Optional[int] = None, no_ai: bool = False, port: int = 8765, art
     runner = SimulationRunner(engine)
     game = LiveServer(engine, runner, port=port)
     kingdom = Kingdom(engine, runner, game.state)
-    advisor = Advisor(engine, runner)
+    advisor = Advisor(engine, runner, voice=KingVoice(kingdom))
     arthur = ArthurServer(engine, runner, advisor, game_url="", port=arthur_port, kingdom=kingdom)
     return engine, runner, game, arthur
 

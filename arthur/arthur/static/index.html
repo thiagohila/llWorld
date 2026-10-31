@@ -97,6 +97,8 @@ td b{color:var(--ink);font-weight:600}
 .msg.character .who{color:var(--gold)}
 .msg.system{align-self:center;background:none;color:var(--ink3);font-style:italic;font-size:11.5px;text-align:center;max-width:100%}
 .msg.pending{opacity:.6}
+.msg .advice{display:block;margin-top:6px;padding-top:5px;border-top:1px solid var(--line);font-family:var(--mono);font-size:10px;color:var(--ink3)}
+.msg .advice b{font-weight:600;color:var(--gold)}
 form{display:flex;gap:8px;padding:12px 16px 16px;border-top:1px solid var(--line)}
 form input{flex:1}
 form button{background:var(--gold2);border-color:#6A5420;color:var(--gold);font-weight:600}
@@ -218,12 +220,15 @@ function renderCouncil(c){
 $("findKing").addEventListener("click",function(){if(!king)return;
   var f=$("gameFrame");try{f.contentWindow.postMessage({type:"worldbox:focus",id:king.id},new URL(f.src).origin)}catch(e){}});
 
+var VERDICT={accept:"concorda",consider:"vai considerar",reject:"recusa",clarify:"pede esclarecimento"};
+function adviceTag(a){if(!a)return "";
+  return '<span class="advice">conselho: '+esc(a.summary)+' · <b>'+esc(VERDICT[a.verdict]||a.verdict)+'</b>'+(a.urgent?' · urgente':'')+'</span>'}
 function pollMessages(){return api("/api/messages?since="+since).then(function(d){if(!d||!d.ok)return;
   var log=$("log"),stick=log.scrollTop+log.clientHeight>=log.scrollHeight-24,fresh=false;
   (d.messages||[]).forEach(function(m){var el=seen[m.id];
     if(!el){el=document.createElement("div");seen[m.id]=el;log.appendChild(el);fresh=true}
     el.className="msg "+(m.role||"system")+(m.pending?" pending":"");
-    el.innerHTML=(m.role!=="system"&&m.name?'<span class="who">'+esc(m.name)+(m.day!=null?" · "+fmtDay(m.day):"")+"</span>":"")+esc(m.text||(m.pending?"…":""));
+    el.innerHTML=(m.role!=="system"&&m.name?'<span class="who">'+esc(m.name)+(m.day!=null?" · "+fmtDay(m.day):"")+"</span>":"")+esc(m.text||(m.pending?"…":""))+adviceTag(m.advice);
     if(!m.pending&&m.id>since)since=m.id;
   });
   if(stick||fresh)log.scrollTop=log.scrollHeight;

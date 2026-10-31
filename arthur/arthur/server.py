@@ -187,6 +187,13 @@ class ArthurServer:
         tribe_models = sorted({r.model for r in rows if r.model})
         nar = narrator.usage_snapshot()
         chat = self.advisor.usage_snapshot()
+        waiting = f"esperando a cota da LLM (429), nova tentativa em {retry_min} min"
+        if not chat["uses_llm"]:
+            chat_state = "ligado, texto de teste sem LLM" if chat["enabled"] else "desligado (só a conversa)"
+        elif not chat["enabled"]:
+            chat_state = master_state("desligado (só a conversa)")
+        else:
+            chat_state = master_state(waiting if retry_min else None)
         purposes = [
             {
                 "id": "tribes", "name": "Mentes das tribos", "where": "jogo",
@@ -211,8 +218,7 @@ class ArthurServer:
                 "id": "arthur_chat", "name": "Conversa do Arthur", "where": "Arthur",
                 "what": "o rei responde ao conselheiro",
                 "model": chat["model"],
-                "state": master_state(None if chat["enabled"] else "desligado (só a conversa)")
-                         if chat["uses_llm"] else ("ligado, texto de teste sem LLM (até a etapa 4)" if chat["enabled"] else "desligado (só a conversa)"),
+                "state": chat_state,
                 "control": "própria",
                 "enabled": chat["enabled"],
                 "usage": {"calls": chat["llm_calls"], "failures": chat["failures"], "messages": chat["messages"],
@@ -224,7 +230,7 @@ class ArthurServer:
                 "model": council_house.get("label", "—") if council_house else "—",
                 "state": {
                     "on": "ligado", "thinking": "ligado (pensando)", "error": "ligado (última chamada falhou)",
-                    "quota": f"esperando a cota da LLM (429), nova tentativa em {retry_min} min",
+                    "quota": waiting,
                     "off_own": "desligado (só as decisões)", "off_master": "desligado (interruptor geral)",
                     "off_no_ai": "desligado (--no-ai)", "halted": "parado: " + (halted or ""),
                     "no_source": "sem fonte de LLM", "none": "—",

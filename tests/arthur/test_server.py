@@ -63,7 +63,7 @@ try:
         done = [m for m in msgs["messages"] if m["role"] == "character" and not m["pending"]]
         if done: reply = done[-1]; break
         time.sleep(0.05)
-    check("the king's stand-in answers", reply is not None and "(teste)" in reply["text"], reply)
+    check("the king's stand-in answers", reply is not None and "(sem LLM)" in reply["text"], reply)
     _, later = req("GET", "/api/messages?since=%d" % reply["id"], token=token)
     check("since filters old messages", later["messages"] == [])
 
