@@ -137,7 +137,8 @@ days(2)
 pol = council.policy
 check("red line: no war on a peaceful people", (peaceful.id, "war") not in pol.toward and (other.id, "war") in pol.toward, pol.toward)
 check("unknown tribe dropped", all(tid != 9999 for tid, _ in pol.toward))
-check("vetoes recorded", any("unprovoked" in v for v in council.log[0]["vetoes"]), council.log[0]["vetoes"])
+check("red-line veto credited to the king", any(v["by"] == "king" and "unprovoked" in v["text"] for v in council.log[0]["vetoes"]), council.log[0]["vetoes"])
+check("unknown tribe credited to the game", any(v["by"] == "game" and "9999" in v["text"] for v in council.log[0]["vetoes"]))
 rel = engine.diplomacy.relation(realm.id, other.id)
 days(3)
 check("toward moves relations (war pushes down)", engine.diplomacy.relation(realm.id, other.id) < rel)
@@ -161,6 +162,14 @@ answer["text"] = json.dumps({"stance": "farm", "intent": "Flat answer.", "farmer
 council.signature = None; council.last_day -= interval; council.retry_day = -1; council.retry_wall = 0
 days(2)
 check("flat JSON (the mock's shape) accepted", council.policy.intent == "Flat answer." and council.rationale == "Flat answer.")
+
+# --- the craft limit is told, so he stops asking ---------------------------------------
+known = realm.knowledge.known
+fake = {f"custom_test_{i}" for i in range(engine.config.ai.max_custom_techs)}
+check("no limit line while under it", "unique crafts allowed" not in council._messages()[1]["content"])
+known.update(fake)
+check("limit reached: report tells him", "unique crafts allowed" in council._messages()[1]["content"])
+known.difference_update(fake)
 
 # --- forget, fatal, reset -----------------------------------------------------------
 r = game.state.control("ai_forget", None)

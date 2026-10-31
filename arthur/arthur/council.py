@@ -34,8 +34,8 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Deque, Dict, List, Optional, Tuple
 
 from .bridge import (
-    ChatResult, EventKind, available_houses, brief_tribe, chat, extract_json, house_spec,
-    parse_policy, scan_materials, situation_signature, validate_proposal,
+    ChatResult, EventKind, available_houses, brief_tribe, chat, custom_count, extract_json,
+    house_spec, parse_policy, scan_materials, situation_signature, validate_proposal,
 )
 
 LOW_GRANARY = 0.25  # below this fraction full, the king is asked to think now...
@@ -266,6 +266,10 @@ class Council:
             # The game's report reads the last intent from its own table, where
             # Arthur's policy does not live.
             report += f"\nYour last decision (day {self.policy.thought_day}): {self.policy.stance} -- {self.policy.intent}"
+        limit = self.engine.config.ai.max_custom_techs
+        if custom_count(self.realm) >= limit:
+            # The game refuses any more; asking would only waste tokens.
+            report += f"\nYou already know the most unique crafts allowed ({limit}): set invent to null."
         return [{"role": "system", "content": system}, {"role": "user", "content": report}]
 
     def _ask(self, day: int, house: Dict[str, Any], now: float, reason: str) -> None:
@@ -330,8 +334,12 @@ class Council:
         self.retry_day = day + config.think_interval_days * factor
         self.retry_wall = time.monotonic() + config.failure_backoff_seconds * factor
 
-    def _validate(self, text: str, day: int, label: str) -> Tuple[Any, str, List[str]]:
-        """The game's checks (parse_policy) plus Arthur's own."""
+    def _validate(self, text: str, day: int, label: str) -> Tuple[Any, str, List[Dict[str, str]]]:
+        """The game's checks (parse_policy) plus Arthur's own.
+
+        Each veto says who made it: ``game`` (the world does not allow it --
+        an unknown tribe, an invention the land or the craft limit rules out)
+        or ``king`` (his own red line)."""
         engine, realm = self.engine, self.realm
         raw = extract_json(text)
         body = raw.get("policy") if isinstance(raw.get("policy"), dict) else raw
@@ -340,15 +348,15 @@ class Council:
         policy = parse_policy(body, day, f"Arthur · {label}", era=realm.era)
         rationale = str(raw.get("rationale") or "").strip().replace("\n", " ")[:300]
 
-        vetoes: List[str] = []
+        vetoes: List[Dict[str, str]] = []
         kept = []
         for other_id, action in policy.toward:
             other = engine.groups.get(other_id)
             if other is None or other_id == realm.id:
-                vetoes.append(f"tribe {other_id} unknown")
+                vetoes.append({"by": "game", "text": f"tribe {other_id} unknown"})
                 continue
             if action == "war" and _red_line_forbids_war(engine, realm, other_id):
-                vetoes.append(f"no unprovoked war on {other.name}")
+                vetoes.append({"by": "king", "text": f"no unprovoked war on {other.name}"})
                 continue
             kept.append((other_id, action))
         policy.toward = kept
@@ -356,18 +364,18 @@ class Council:
             # With no target, a raid leans on the worst neighbour: same red line.
             worst = engine.diplomacy.relation_summary(realm.id, engine.groups)
             if not worst or _red_line_forbids_war(engine, realm, worst[0][0].id):
-                vetoes.append("raid with no enemy became defend")
+                vetoes.append({"by": "king", "text": "raid with no enemy became defend"})
                 policy.stance = "defend"
         if policy.invent is not None:
             problem = validate_proposal(policy.invent, realm, scan_materials(engine, realm), engine.config.ai)
             if problem:
-                vetoes.append(f"invention dropped: {problem}")
+                vetoes.append({"by": "game", "text": f"invention dropped: {problem}"})
                 policy.invent = None
         if not rationale:
             rationale = policy.intent or policy.stance
         return policy, rationale, vetoes
 
-    def _apply(self, day: int, policy: Any, rationale: str, vetoes: List[str]) -> None:
+    def _apply(self, day: int, policy: Any, rationale: str, vetoes: List[Dict[str, str]]) -> None:
         engine, realm = self.engine, self.realm
         previous = self.policy
         self.policy, self.rationale = policy, rationale

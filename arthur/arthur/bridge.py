@@ -31,7 +31,7 @@ ensure_fork_importable()
 from worldbox.agents.needs import Needs  # noqa: E402
 from worldbox.ai import narrator  # noqa: E402
 from worldbox.ai.client import ChatResult, chat, house_spec  # noqa: E402
-from worldbox.ai.inventions import scan_materials, validate_proposal  # noqa: E402
+from worldbox.ai.inventions import custom_count, scan_materials, validate_proposal  # noqa: E402
 from worldbox.ai.minds import TribePolicy, extract_json, parse_policy  # noqa: E402
 # Private helpers of the tribe minds, reused so Arthur reads his realm the way
 # every tribe mind does (v1: he sees his own tribe's full report).
@@ -51,7 +51,7 @@ from worldbox.society.groups import GroupRegistry  # noqa: E402
 __all__ = [
     "DISEASES", "FORK_ROOT", "ChatResult", "Config", "EventKind", "GroupRegistry", "LiveServer",
     "Needs", "SimulationEngine", "SimulationRunner", "TribePolicy", "all_houses",
-    "available_houses", "brief_tribe", "chat", "culture", "extract_json", "found_tribe",
+    "available_houses", "brief_tribe", "chat", "culture", "custom_count", "extract_json", "found_tribe",
     "house_spec", "llm_available", "narrator", "parse_policy", "scan_materials",
     "settle_people", "situation_signature", "validate_proposal",
 ]

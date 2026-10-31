@@ -49,6 +49,7 @@ header p{margin:2px 0 0;color:var(--ink3);font-size:11.5px}
 .dec .intent{color:var(--ink);margin:6px 0 3px;font-size:12.5px}
 .dec .why{color:var(--ink2);font-size:12px;line-height:1.5}
 .dec .veto{color:var(--warn);font-family:var(--mono);font-size:10.5px;margin-top:4px}
+.dec .veto.game{color:var(--ink3)}
 .dec.past{opacity:.82}
 #llm{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:10.5px;color:var(--ink2)}
 #llmBtn{font-family:var(--mono);font-size:11px;letter-spacing:.06em;background:rgba(134,188,255,.10);border-color:#2F4A6E;color:var(--mind)}
@@ -182,6 +183,9 @@ var ACTION={war:"guerra",peace:"paz",trade:"comércio",ignore:"ignorar"};
 var CSTATUS={on:"ligado",thinking:"pensando…",error:"última chamada falhou",off_own:"desligado (só as decisões)",
   off_master:"desligado (interruptor geral)",off_no_ai:"desligado (--no-ai)",halted:"parado",no_source:"sem fonte de LLM",none:"—"};
 var councilKey="";
+function vetoLine(v,by,label){var t=(v||[]).filter(function(x){return typeof x==="string"?by==="king":x.by===by})
+  .map(function(x){return typeof x==="string"?x:x.text});
+  return t.length?'<div class="veto'+(by==="game"?' game':'')+'">'+label+': '+esc(t.join("; "))+'</div>':''}
 function decCard(d,past){
   var t=(d.toward||[]).map(function(x){return "tribo "+x.id+": "+(ACTION[x.action]||x.action)}).join(" · ");
   return '<div class="card dec'+(past?" past":"")+'"><div class="top"><span class="stance">'+esc(STANCE[d.stance]||d.stance)+'</span>'+
@@ -189,7 +193,7 @@ function decCard(d,past){
     (d.intent?'<div class="intent">“'+esc(d.intent)+'”</div>':'')+
     '<div class="why">'+esc(d.rationale||"")+'</div>'+
     (t?'<div class="note">'+esc(t)+'</div>':'')+
-    ((d.vetoes||[]).length?'<div class="veto">vetado pelas regras do rei: '+esc(d.vetoes.join("; "))+'</div>':'')+
+    vetoLine(d.vetoes,"king","vetado pelas regras do rei")+vetoLine(d.vetoes,"game","recusado pelo jogo")+
     '<div class="note">'+esc(d.model||"")+'</div></div>';
 }
 function renderCouncil(c){

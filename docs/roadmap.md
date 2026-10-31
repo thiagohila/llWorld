@@ -4,7 +4,7 @@ Atualizado em 2026-10-21. O *quê* está em `../llWorld-visao-produto.md`; ideia
 
 ## Estado atual
 
-### O jogo — fork `worldbox/` em `bbbea3a` (funcionando)
+### O jogo — fork `worldbox/` em `a5409d3` (funcionando)
 
 Roda como veio do `ryfcx/worldbox`, com melhorias pontuais — nenhuma regra de simulação mudou (md5 de regressão idêntico desde o início):
 
@@ -17,6 +17,7 @@ Roda como veio do `ryfcx/worldbox`, com melhorias pontuais — nenhuma regra de 
 | Correções | Smite matava 0 de 14 (agora mata), narrador só com DeepSeek, política `{}` | `d6472e1` |
 | LLM em jogo | interruptor, teto por minuto e nº de tribos (3) ajustáveis; selo azul nas tribos com LLM | `e405b54`, `e228169` |
 | Para o Arthur | pessoas destacadas no mapa (`LiveState.feature`) + foco por mensagem; fundação de tribo reutilizável (`society/founding.py`) | `bbbea3a` |
+| Mapa | plantações, casinhas, invenções, guerras, amizades, surtos e ruínas no mapa; bonecos andando suave entre atualizações; limite de invenções próprias 8 → 100 | `a5409d3` |
 
 Ainda em aberto no jogo: segurança do servidor local (CSRF, DNS rebinding), determinismo com duas chaves, sem suíte de testes — ver `pendencias/jogo.md`.
 

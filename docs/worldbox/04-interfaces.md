@@ -11,7 +11,7 @@ Nenhuma interface muda regras: todas leem o motor por `runner.lock`. As únicas 
 |---|---|
 | `/` | página (`static/live.html`, relida do disco a cada request) |
 | `/world` | terreno e dimensões, buscado uma vez |
-| `/state?since=` | snapshot: agentes, tribos, mentes, assentamentos, log; `ai.usage` = chamadas, por minuto/teto, puladas, falhas, tokens, `halted`; `featured` = pessoas destacadas (`id`, `label`, `kind`, `x`, `y`, `color`); polling a cada 500 ms |
+| `/state?since=` | snapshot: agentes, tribos, mentes, assentamentos, log; `ai.usage` = chamadas, por minuto/teto, puladas, falhas, tokens, `halted`; `featured` = pessoas destacadas (`id`, `label`, `kind`, `x`, `y`, `color`); `conflicts` (guerras ativas com posições, dias, mortos), `bonds` (pares com relação ≥ `trade_min_relation`), `outbreaks` (surtos ativos: origem, doença, doentes, mortos), `ruins` (assentamentos abandonados); polling a cada 500 ms. Fora do `/state`, o mapa lê `/overlay?kind=fertility` a cada 4 s para desenhar as plantações |
 | `/inspect?x=&y=` | detalhe de um tile |
 | `/overlay?kind=` | camada (fertilidade etc.), a cada 4 s |
 | `/explain` | narrador; **solta o lock antes da chamada de rede** |
@@ -34,6 +34,14 @@ Nenhuma interface muda regras: todas leem o motor por `runner.lock`. As únicas 
 - Ao carregar, a página envia ao servidor a velocidade destacada (1×), para não rodar no default de 0,12 s do `config.py`.
 - **Extensões (2026-10-21):** para cada extensão `kind: "chat"` o HUD cria uma aba (antes de History) com um painel de conversa genérico — histórico, "pensando…", caixa de envio — que consulta `/ext/<id>/messages` a cada segundo e envia por `POST /ext/<id>/send`. O fork não sabe o que a extensão é. Recurso genérico e opcional: hoje nenhum projeto registra extensões — o Arthur tem HUD próprio (`arthur/`). O painel da direita termina acima do minimapa (altura medida em JS), para a caixa de texto nunca ficar coberta.
 - **Quem é governado por LLM (2026-10-21):** selo azul com o ícone de mente e o nome da tribo sobre o assentamento (ou centro, se nômade) de cada tribo que segue uma política de LLM agora; com zoom de perto, um pontinho azul sobre a cabeça de cada membro; selo "LLM" na lista de Civs. Com o LLM desligado, o selo fica apagado e diz "LLM off". Fonte: campo `llm` em cada item de `civs` no `/state`.
+- **Movimento suave (2026-10-30):** na simulação cada pessoa anda no máximo 1 tile por dia, em qualquer das 8 direções (`agents/behavior.py:_step_towards`, `_step_away_from`). Mas o mapa atualiza a cada 0,5 s e em 1× passam ~8 dias nesse tempo (0,06 s/dia), então o boneco saltava vários tiles e parecia sumir e reaparecer. Agora o `/state` manda `agentIds` (mesma ordem de `agents`) e a página leva cada pessoa da posição desenhada até a nova em ~0,45 s; quem nasce aparece aos poucos. Só visual: as regras não mudaram.
+- **O que acontece entre lugares (2026-10-30):** desenhado sempre, com legenda "On the map" na aba Inspect e pontos no minimapa. **[executado]**
+  - *Plantações* — faixas douradas (espigas de perto) nos quadrados de grama com fertilidade ≥ 1,2, ou seja, cultivados por fazendeiros.
+  - *Casinhas* — representação: o jogo tem um prédio por assentamento; o mapa desenha 1 casinha por 6 habitantes (até 12) em volta, na cor da tribo, em lugares fixos.
+  - *Invenções* — lâmpada com o nome sobre a casa da tribo por 90 dias (de `discoveries`).
+  - *Guerras* — linha vermelha tracejada entre as casas das duas tribos, espadas no meio, dias e mortos. *Amizades* — linha verde pontilhada.
+  - *Surtos* — nuvem roxa na origem com doença e doentes. *Ruínas* — escombros com "Ruins of …" (some se uma cidade nova ocupa o lugar).
+  - Sem LLM o mundo é calmo: em 8 mil dias (seeds 42, 7, 3) nenhuma guerra, nenhuma relação acima de 0, nenhuma cidade abandonada. Guerras e amizades vêm sobretudo das mentes de LLM (`toward`).
 - **Pessoas destacadas (2026-10-21):** quem foi marcado com `LiveState.feature` (hoje: o Rei Arthur) ganha anel dourado no tile, plaquinha com o nome (com coroa se `kind="king"`) em qualquer zoom e um ponto dourado no minimapa. Se a página estiver num frame, a janela-mãe pode pedir para centralizar numa delas com `postMessage({type:"worldbox:focus", id})` — o mapa aproxima e o anel pisca; só a janela-mãe é ouvida e só a vista se move.
 - Botão **AI on/off** no topo (ao lado do play) e controles de LLM na aba Minds (ligar/desligar, teto por minuto, esquecer decisões).
 - Atalhos: `Espaço` pausa · `M` liga/desliga LLM · `1`–`6` poderes · `N` fundar · `L` alterna camadas · `F` enquadrar · `+`/`-` zoom · `[`/`]` velocidade · `Esc` cancela.
