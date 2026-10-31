@@ -151,6 +151,7 @@ class ArthurServer:
             council_use = council.usage_snapshot() if council is not None else {}
             council_status = council.status() if council is not None else "none"
             council_house = council.house() if council is not None else {}
+            retry_min = -(-council.quota.retry_in() // 60) if council is not None else 0
         paused, halted = mind_use["paused"], mind_use["halted"]
         usable = available_houses()
         usable_keys = {(s["house"], s["model"]) for s in usable}
@@ -223,6 +224,7 @@ class ArthurServer:
                 "model": council_house.get("label", "—") if council_house else "—",
                 "state": {
                     "on": "ligado", "thinking": "ligado (pensando)", "error": "ligado (última chamada falhou)",
+                    "quota": f"esperando a cota da LLM (429), nova tentativa em {retry_min} min",
                     "off_own": "desligado (só as decisões)", "off_master": "desligado (interruptor geral)",
                     "off_no_ai": "desligado (--no-ai)", "halted": "parado: " + (halted or ""),
                     "no_source": "sem fonte de LLM", "none": "—",

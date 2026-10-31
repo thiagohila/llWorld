@@ -206,6 +206,36 @@ known.update(fake)
 check("limit reached: report tells him", "unique crafts allowed" in council._messages()[1]["content"])
 known.difference_update(fake)
 
+# --- quota spent (429): wait on the gate, longer each time ---------------------------
+gate = council.quota
+clock = [1000.0]
+gate._clock = lambda: clock[0]
+answer["result"] = ChatResult(error="API returned 429: quota exceeded", status=429)
+council.policy = None; council.retry_day = -1; council.retry_wall = 0
+before = len(king_calls)
+days(2)
+check("a 429 closes the gate", not gate.open() and council.status() == "quota" and gate.retry_in() == 60,
+      (council.status(), gate.retry_in()))
+council.retry_day = -1; council.retry_wall = 0  # only the gate holds him now
+asked = len(king_calls)
+days(interval * 3)
+check("no calls while the gate is closed", len(king_calls) == asked and asked == before + 1, (before, asked, len(king_calls)))
+cp = next(p for p in arthur.llm_report()["purposes"] if p["id"] == "arthur_council")
+check("LLMs tab says he waits for the quota", "429" in cp["state"] and "1 min" in cp["state"], cp["state"])
+check("HUD gets the wait", arthur.state()["council"]["retryIn"] == 60)
+clock[0] += 61
+council.retry_day = -1; council.retry_wall = 0
+days(2)
+check("tries again after the wait; a second 429 waits longer",
+      len(king_calls) == asked + 1 and gate.retry_in() == 300, (len(king_calls), gate.retry_in()))
+answer["result"] = None
+clock[0] += 301
+council.retry_day = -1; council.retry_wall = 0
+days(2)
+check("an answer reopens the gate", gate.open() and gate.strikes == 0 and council.policy is not None
+      and council.status() != "quota")
+gate._clock = time.monotonic
+
 # --- forget, fatal, reset -----------------------------------------------------------
 r = game.state.control("ai_forget", None)
 check("map's forget also drops his policy", council.policy is None and r.get("forgotten", 0) >= 1, r)

@@ -17,7 +17,8 @@ own, takes its calls from the same per-minute budget as the tribe minds
 (``call_cap`` / ``calls_last_minute``), and thinks on the minds' cadence
 (``think_interval_days``, ``min_think_seconds``), skipping when nothing
 changed -- except that a war starting or ending, the granary running low or
-having no policy at all make him think at the next chance.
+having no policy at all make him think at the next chance. After a 429 (the
+quota is spent) he waits on a gate shared with the chat (``quota.QuotaGate``).
 
 Calls run on a worker thread; results land in a queue drained on the
 simulation thread. Each world gets a new generation, so an answer about a
@@ -37,6 +38,7 @@ from .bridge import (
     ChatResult, EventKind, available_houses, brief_tribe, chat, custom_count, extract_json,
     house_spec, parse_policy, scan_materials, situation_signature, validate_proposal,
 )
+from .quota import QuotaGate
 
 LOW_GRANARY = 0.25  # below this fraction full, the king is asked to think now...
 REARM_GRANARY = 0.40  # ...and not again until it has been back above this
@@ -98,10 +100,12 @@ def _red_line_forbids_war(engine: Any, realm: Any, other_id: int) -> bool:
 class Council:
     """Thinks for Arthur's realm and holds the policy the engine follows."""
 
-    def __init__(self, engine: Any, runner: Any, persona: Dict[str, Any]) -> None:
+    def __init__(self, engine: Any, runner: Any, persona: Dict[str, Any],
+                 quota: Optional[QuotaGate] = None) -> None:
         self.engine = engine
         self.runner = runner
         self.persona = persona
+        self.quota = quota or QuotaGate()
         self.enabled = True  # Arthur's own switch, under the game's master switch.
         self.log: Deque[Dict[str, Any]] = deque(maxlen=LOG_SIZE)
         self._inbox: "queue.Queue[Tuple[int, int, str, Any]]" = queue.Queue()
@@ -163,6 +167,8 @@ class Council:
             return "off_own"
         if self.pending:
             return "thinking"
+        if not self.quota.open():
+            return "quota"
         if self.error:
             return "error"
         return "on"
@@ -173,6 +179,7 @@ class Council:
             "status": self.status(),
             "model": self.house().get("label", "—") if self.house() else "—",
             "error": self.error,
+            "retryIn": self.quota.retry_in(),
             "policy": None if policy is None else {
                 "stance": policy.stance, "intent": policy.intent, "day": policy.thought_day,
                 "toward": [{"id": tid, "action": action} for tid, action in policy.toward],
@@ -251,6 +258,8 @@ class Council:
                     self.granary_low = low
                     self.usage["skipped"] += 1
                     return
+        if not self.quota.open():
+            return  # The provider said 429; wait as long as the gate says.
         if minds.call_cap() - minds.calls_last_minute() <= 0:
             return  # The shared budget is spent; try again on a later day.
         house = self.house()
@@ -318,6 +327,7 @@ class Council:
             if generation != self.generation:
                 continue  # An answer about a world that no longer exists.
             self.pending = False
+            self.quota.record(result)
             self.usage["tokens_in"] += result.tokens_in
             self.usage["tokens_out"] += result.tokens_out
             self.usage["tokens_cached"] += result.tokens_cached
