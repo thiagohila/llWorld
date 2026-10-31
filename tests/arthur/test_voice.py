@@ -24,9 +24,13 @@ def check(name, cond, extra=""):
 # --- fakes ---------------------------------------------------------------------
 fork_minds.chat = lambda **kw: ChatResult(text=json.dumps({"stance": "farm", "intent": "Grow grain."}), status=200)
 council_calls = []
+council_answer = {"followed": [], "result": None}
 def fake_council(**kw):
     council_calls.append(kw)
+    if council_answer["result"] is not None:
+        return council_answer["result"]
     return ChatResult(text=json.dumps({"policy": {"stance": "farm", "intent": "Fill the granaries.", "farmer_share": 0.5},
+                                       "advice_followed": council_answer["followed"],
                                        "rationale": "Celeiro primeiro."}), status=200)
 council_mod.chat = fake_council
 
@@ -121,6 +125,84 @@ answer["result"] = ChatResult(error="API returned 503", status=503)
 _, msgs = send("Ei?")
 check("call error: same fallback", any(m["text"] == voice_mod.FALLBACK for m in msgs))
 
+# --- stage 4b: advice he did not turn down reaches his next decision -------------------------------
+def days(n):
+    for _ in range(n):
+        engine.step()
+        if council.pending:
+            settle_council()
+
+council.advice.clear(); council.urgent = False
+interval = minds.config.think_interval_days
+days(interval + 1)  # a fresh decision, so the next one is a while away
+check("prompt shape asks which advice he follows", "advice_followed" in council._messages()[0]["content"])
+check("no counsel line without advice", "advisor's counsel" not in council._messages()[1]["content"])
+answer["result"] = said("Não.", {"summary": "atacar os vizinhos", "verdict": "reject", "urgent": False})
+send("Ataque!")
+check("rejected advice is not kept", council.advice == [])
+answer["result"] = said("Pensarei.", {"summary": "plantar mais trigo", "verdict": "consider", "urgent": False})
+send("Plante mais trigo.")
+answer["result"] = said("Sim.", {"summary": "fazer paz com os vizinhos", "verdict": "accept", "urgent": False})
+send("Faça paz com os vizinhos.")
+check("considered and accepted advice kept", [a["summary"] for a in council.advice] == ["plantar mais trigo", "fazer paz com os vizinhos"])
+check("HUD lists the advice waiting", len(arthur.state()["council"]["advice"]) == 2)
+report = council._messages()[1]["content"]
+ids = [a["id"] for a in council.advice]
+check("report carries the counsel, his words and his verdict", f"[{ids[0]}]" in report and "Plante mais trigo." in report
+      and "you would consider it" in report and "you agreed" in report, report[-400:])
+council_answer["followed"] = [ids[1], "a999"]
+n = len(council_calls)
+days(interval + 1)
+check("he thought on his usual day", len(council_calls) > n)
+entry = council.log[0]
+check("log says which advice he followed", entry["advice"] == [{"summary": "plantar mais trigo", "followed": False},
+                                                              {"summary": "fazer paz com os vizinhos", "followed": True}], entry.get("advice"))
+check("weighed advice is consumed", council.advice == [])
+council_answer["followed"] = []
+
+for i in range(5):
+    answer["result"] = said("Pensarei.", {"summary": f"ideia {i}", "verdict": "consider", "urgent": False})
+    send(f"ideia {i}")
+check("only the last 3 pieces wait", [a["summary"] for a in council.advice] == ["ideia 2", "ideia 3", "ideia 4"])
+days(interval + 1)
+council.advice.clear()
+
+# urgent advice brings the council forward, but not within 10 days of the last
+n = len(council_calls)
+while len(council_calls) == n:  # right after a decision
+    days(1)
+last = council.last_day
+answer["result"] = said("Agora mesmo pensarei.", {"summary": "defender o celeiro", "verdict": "accept", "urgent": True})
+send("Proteja o celeiro, já!")
+check("urgent advice flags the council", council.urgent and council._situation()[0] == "urgent advice")
+n = len(council_calls)
+days(council_mod.MIN_TRIGGER_DAYS - 2)
+check("not before the minimum gap", len(council_calls) == n)
+days(4)
+check("then he thinks early, for the advice", len(council_calls) == n + 1 and council.log[0]["reason"] == "urgent advice"
+      and engine.clock.day - last < interval, (council.log[0]["reason"], engine.clock.day - last))
+check("urgency cleared once weighed", not council.urgent and council.advice == [])
+
+answer["result"] = said("Pensarei.", {"summary": "algo urgente", "verdict": "consider", "urgent": True})
+send("Urgente!")
+council_answer["result"] = ChatResult(error="API returned 503", status=503)
+days(council_mod.MIN_TRIGGER_DAYS + 1)
+check("a failed council keeps the advice and its urgency", council.advice and council.urgent)
+council_answer["result"] = None
+council.retry_day = -1; council.retry_wall = 0
+days(council_mod.MIN_TRIGGER_DAYS + 1)
+check("and weighs it once the call works", council.advice == [] and council.log[0]["reason"] == "urgent advice")
+
+# an answer that lands after the world was reset is not heard
+gen = council.generation
+call = kingdom.council and arthur.advisor.voice.snapshot([])
+council.generation += 1
+answer["result"] = said("Sim.", {"summary": "velho mundo", "verdict": "accept", "urgent": True})
+arthur.advisor.voice.answer("Velho?", call)
+check("advice about a reset world is dropped", council.advice == [] and not council.urgent)
+council.generation = gen
+answer["result"] = None
+
 # --- budget, quota gate (shared with the council), switches ------------------------------------------
 answer["result"] = None
 minds._recent_calls.clear()
@@ -130,8 +212,35 @@ check("a message counts against the shared per-minute budget", len(minds._recent
 minds._cap_override = 0
 n = len(voice_calls)
 _, msgs = send("Teto?")
-check("budget full: no call, panel says so", len(voice_calls) == n and any("teto" in m["text"] for m in msgs if m["role"] == "system"), msgs)
+check("cap at zero: no call, panel says so", len(voice_calls) == n and any("teto" in m["text"] for m in msgs if m["role"] == "system"), msgs)
+
+# budget busy (tribes and council use it too): the message waits for a slot
+voice = advisor.voice
+minds._cap_override = 1
+minds._recent_calls.clear(); minds._recent_calls.append(time.monotonic())
+last = advisor.handle("messages", {})["messages"][-1]["id"]
+advisor.handle("send", {"text": "Espera?"})
+time.sleep(0.4)
+waiting = advisor.handle("messages", {"since": last})["messages"]
+check("busy budget: the message waits (pending), no call yet", len(voice_calls) == n and any(m["pending"] for m in waiting), waiting)
+check("the panel says the message is queued", any(m["role"] == "system" and "fila" in m["text"] for m in waiting), waiting)
+check("meanwhile the others see one slot less (the player goes first)", minds.call_cap() == 0 and voice._cap() == 1)
+minds._cap_override = None  # room frees up
+for _ in range(400):
+    if not advisor._busy: break
+    time.sleep(0.005)
+msgs = advisor.handle("messages", {"since": last})["messages"]
+check("slot reservation released", minds.call_cap() == voice._cap())
+check("then he answers", len(voice_calls) == n + 1 and any(m["role"] == "character" and not m["pending"] for m in msgs), msgs)
+voice.budget_wait = 0.3
+minds._cap_override = 1
+minds._recent_calls.clear(); minds._recent_calls.append(time.monotonic())
+calls_before = advisor.usage["llm_calls"]
+_, msgs = send("Ainda cheio?")
+check("budget full for the whole wait: panel says so, no call", len(voice_calls) == n + 1
+      and advisor.usage["llm_calls"] == calls_before and any(m["role"] == "system" and "teto" in m["text"] for m in msgs), msgs)
 minds._cap_override = None
+voice.budget_wait = voice_mod.BUDGET_WAIT
 
 answer["result"] = ChatResult(error="API returned 429: quota exceeded", status=429)
 _, msgs = send("Cota?")

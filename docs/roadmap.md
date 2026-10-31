@@ -26,9 +26,10 @@ Ainda em aberto no jogo: segurança do servidor local (CSRF, DNS rebinding), det
 
 - Docs de referência do fork (`docs/worldbox/01..08`), ambiente e versões (`ambiente.md`), checklists, agentes `worldbox-guide` e `sim-runner`.
 - `.venv` com Python 3.14; remotes: `thiagohila/llWorld` e `thiagohila/worldbox` (push para o upstream bloqueado).
-- `arthur/` (Arthur) existe desde a etapa 1: HUD e servidor próprios (porta 8766, com o mapa do jogo num frame), ponte de import, conversa com respostas de teste sem LLM — ver `../arthur/README.md`.
+- `arthur/` (Arthur) existe desde a etapa 1: HUD e servidor próprios (porta 8766, com o mapa do jogo num frame), ponte de import, conversa (sem LLM, um texto de teste; com LLM, o rei responde — etapa 4) — ver `../arthur/README.md`.
 - Etapa 2: o **reino do Arthur** é fundado no dia zero (`arthur/arthur/kingdom.py`): Arthur Pendragon chefe fixo e imortal, reino que não se divide sozinho nem se dissolve, fora das vagas de LLM, com plaquinha dourada no mapa e botão "Onde está o rei?" no HUD do Arthur.
 - Etapa 3: a **mente do Arthur** (`arthur/arthur/council.py`) decide a política do reino — persona + o mesmo relatório que as tribos recebem → política no formato do jogo + justificativa em português; validada pelo jogo (`parse_policy`) e pelas regras do rei (sem tribo desconhecida, sem invenção impossível, sem guerra contra quem está em paz). Aba **Decisões** no HUD do Arthur.
+- Etapa 4: a **conversa** (`arthur/arthur/voice.py`) — o rei responde ao conselheiro em personagem, em português, sabendo do reino e das próprias decisões, e diz o que acha do conselho (concorda, vai considerar, recusa, pede esclarecimento); o que ele não recusou entra na próxima decisão (`Council.hear`), e a aba Decisões mostra se seguiu. Conversar nunca muda o mundo. Cota esgotada (429) → espera crescente; teto por minuto cheio → a mensagem entra na fila com prioridade.
 
 ## Camadas e interfaces
 
@@ -87,13 +88,13 @@ Cada etapa é pequena, testável offline com a mente `mock` e não muda a regres
 | 1 ✅ | **Esqueleto do Arthur** — `arthur/run.py` (jogo + Arthur), ponte de import, HUD e servidor próprios, conversa com respostas de teste; o fork ganhou, como recurso genérico opcional, painéis de extensão no HUD | feito em 2026-10-21: chat de ponta a ponta no navegador, `tests/arthur/test_server.py` passa, md5 intacto |
 | 2 ✅ | **Reino do Arthur** — fundar o reino no início, Arthur chefe fixo, imortal, reino sem dividir; persona aplicada aos traços dele; **visível no mapa** (sprite de rei + plaquinha "Arthur", via "personagem destacado" genérico no fork) e botão "onde está o rei?" no HUD do Arthur | feito em 2026-10-21: `tests/arthur/test_kingdom.py` (anos de jogo, fome, ferimento, doença, Smite, colonos, divisão, vagas de LLM, reset), md5 intacto; visto no navegador |
 | 3 ✅ | **Mente do Arthur** — a tribo dele decidida por um loop próprio (persona + contexto), demais tribos como hoje | feito em 2026-10-21: `tests/arthur/test_council.py` (API simulada) e rodada com `mock`; com Gemini, decisão real recebida e aplicada (após alguns 503 de sobrecarga, absorvidos pela espera) |
-| 4 | **Chat do conselheiro** — rota + UI; conselho vira item de agenda do próximo conselho | Arthur responde em personagem; pode recusar; o chat não muda o mundo diretamente |
+| 4 ✅ | **Chat do conselheiro** — rota + UI; conselho vira item de agenda do próximo conselho | feito em 2026-10-31: `arthur/arthur/voice.py` (resposta em personagem, leitura do conselho) e `Council.hear` (conselho não recusado entra na próxima decisão; urgente antecipa); espera por cota (429) e fila no teto por minuto; `tests/arthur/test_voice.py` (API simulada) e caminho completo com `mock`. **Não visto com o Gemini:** a cota grátis está esgotada desde 2026-10-30 |
 | 5 | **Memória, confiança, conhecimento limitado** | conselhos e consequências lembrados; Arthur não sabe o que não viu |
 | 6 | **Avaliação** pelos critérios da visão §11 | cenários roteirizados passam |
 
 Design detalhado das etapas 3–5 (camadas de contexto, contratos de saída, confiança): `rascunhos/arthur-design.md`. A etapa 3 usou só a parte do conselho, em versão mínima; revisar conversa, memória e confiança antes das etapas 4–5.
 
-**Próxima — etapa 4 (chat do conselheiro), proposta:** Arthur responde em personagem, em português, pelo Gemini, sabendo do reino e das próprias decisões (com justificativa); concorda, considera ou recusa; o conselho vira item que ele pesa na próxima decisão (conselho urgente pode antecipá-la); a conversa nunca muda o mundo direto. Mesmo interruptor e teto; o interruptor próprio da conversa passa a valer. Só as últimas trocas entram no contexto (memória longa é etapa 5).
+**Próxima — etapa 5 (memória, confiança, conhecimento limitado):** a combinar. Antes: ver a conversa com uma LLM de verdade (a cota grátis do Gemini está esgotada; esperar renovar ou usar outra chave/modelo). Detalhes da etapa 4 em `../arthur/README.md`.
 
 ## Cuidados
 

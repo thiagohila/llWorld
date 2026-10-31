@@ -7,10 +7,15 @@ reasons, and the last few exchanges -- nothing else, so he cannot know what
 the report does not say. He replies in character, in Portuguese, and says
 what he makes of any advice: accept, consider, reject or ask to clarify.
 
-Talking never changes the world. The advice he hears is only remembered
-(stage 4b weighs it at his next council).
+Talking never changes the world. Advice he accepts or will consider is
+handed to his council (``Council.hear``), which weighs it at his next
+decision (stage 4b); advice he turns down is not.
 
 Cost: the same master switch, per-minute budget and quota gate as his council.
+The tribes and the council usually keep the per-minute budget busy, so a
+message waits for a free slot (up to ``BUDGET_WAIT`` seconds) instead of
+being turned away -- and while it waits, everyone else sees one slot less
+(``minds.call_cap`` is wrapped), so the player's message goes first.
 Without an LLM (``--no-ai``, no source) the advisor keeps its offline stand-in.
 """
 
@@ -24,6 +29,7 @@ from .bridge import brief_tribe, chat, extract_json
 from .quota import QuotaGate
 
 HISTORY_EXCHANGES = 6
+BUDGET_WAIT = 60.0  # seconds a message may wait for room in the per-minute budget
 MAX_TOKENS = 500
 MAX_REPLY = 1200
 VERDICTS = ("accept", "consider", "reject", "clarify")
@@ -122,6 +128,16 @@ class KingVoice:
         self.kingdom = kingdom
         self.engine = kingdom.engine
         self.quota = quota or kingdom.council.quota
+        self.budget_wait = BUDGET_WAIT
+        self._waiting = 0
+        minds = self.engine.minds
+        self._cap = minds.call_cap
+
+        def call_cap() -> int:
+            cap = self._cap()
+            return max(0, cap - 1) if self._waiting else cap
+
+        minds.call_cap = call_cap
 
     @property
     def model(self) -> str:
@@ -141,13 +157,17 @@ class KingVoice:
             minutes = max(1, -(-self.quota.retry_in() // 60))
             return (f"A cota da LLM está esgotada (429). O rei volta a responder em ~{minutes} min; "
                     "a espera aumenta se o provedor seguir recusando.")
-        if minds.call_cap() - minds.calls_last_minute() <= 0:
-            return "O teto de chamadas por minuto está cheio. Tente de novo em instantes."
+        if self._cap() <= 0:
+            return "O teto de chamadas por minuto está em zero (aba LLMs)."
         return ""
 
+    def budget_busy(self) -> bool:
+        """The per-minute budget is full right now (the message will wait). Call under runner.lock."""
+        minds = self.engine.minds
+        return self._cap() - minds.calls_last_minute() <= 0
+
     def snapshot(self, history: List[Dict[str, str]]) -> Dict[str, Any]:
-        """Everything the call needs, read under ``runner.lock`` by the advisor;
-        counts the call against the shared per-minute budget."""
+        """Everything the call needs, read under ``runner.lock`` by the advisor."""
         p, engine = self.kingdom.persona, self.engine
         seat = engine.settlements.for_group(self.kingdom.group.id) if self.kingdom.group else None
         system = SYSTEM_PROMPT.format(
@@ -158,15 +178,36 @@ class KingVoice:
             red_lines="\n".join(f"- {r}" for r in p["red_lines"]),
             day=engine.clock.day, year=engine.clock.year, report=_report(engine, self.kingdom),
         )
-        engine.minds._recent_calls.append(time.monotonic())  # Same window as the tribe minds.
         return {
             "messages": [{"role": "system", "content": system}] + history[-2 * HISTORY_EXCHANGES:],
             "house": self.kingdom.council.house()["house"],
+            "generation": self.kingdom.council.generation,
+            "day": engine.clock.day,
             "timeout": engine.minds.config.timeout_seconds,
         }
 
+    def _claim(self) -> bool:
+        """Take one call from the shared per-minute budget, waiting for room."""
+        minds = self.engine.minds
+        deadline = time.monotonic() + self.budget_wait
+        self._waiting += 1  # the others see one slot less meanwhile
+        try:
+            while True:
+                with self.kingdom.runner.lock:
+                    if self._cap() - minds.calls_last_minute() > 0:
+                        minds._recent_calls.append(time.monotonic())  # Same window as the tribe minds.
+                        return True
+                if time.monotonic() >= deadline:
+                    return False
+                time.sleep(0.1)
+        finally:
+            self._waiting -= 1
+
     def answer(self, text: str, call: Dict[str, Any]) -> Dict[str, Any]:
         """Ask the model (worker thread, no lock held)."""
+        if not self._claim():
+            return {"blocked": "O teto de chamadas por minuto ficou cheio por 1 min (as tribos e o conselho "
+                               "também usam). Tente de novo, ou aumente o teto na aba LLMs."}
         messages = call["messages"] + [{"role": "user", "content": text}]
         result = chat(messages=messages, model=call["house"], timeout=call["timeout"], retries=1,
                       backoff=1.0, temperature=0.8, max_tokens=MAX_TOKENS, json_mode=True)
@@ -182,4 +223,11 @@ class KingVoice:
             out.update(parse_reply(result.text))
         except ValueError as error:
             out["error"] = f"resposta inutilizável ({error})"
+            return out
+        advice = out["advice"]
+        if advice is not None and advice["verdict"] in ("accept", "consider"):
+            with self.kingdom.runner.lock:
+                council = self.kingdom.council
+                if council.generation == call["generation"]:  # not about a world since reset
+                    council.hear(advice, text, call["day"])
         return out

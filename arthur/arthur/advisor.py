@@ -161,6 +161,7 @@ class Advisor:
             }
             if live:
                 context["call"] = self.voice.snapshot(self._history())
+                context["queued"] = self.voice.budget_busy()
             return context
 
     def _history(self) -> List[Dict[str, str]]:
@@ -195,6 +196,9 @@ class Advisor:
             with self._lock:
                 self._busy = False
             return {"ok": True}
+        if context.get("queued"):
+            self._add("system", "O teto de chamadas por minuto está ocupado (tribos e conselho também usam). "
+                                "Sua mensagem é a próxima da fila; pode levar até 1 min.")
         pending = self._add("character", "", name=self.character, day=context["day"], pending=True)
         threading.Thread(
             target=self._answer, args=(pending.id, text, context),
@@ -205,22 +209,25 @@ class Advisor:
     def _answer(self, message_id: int, text: str, context: Dict[str, Any]) -> None:
         failed, advice, note, out = False, None, "", {}
         try:
+            role = "character"
             if "call" in context:
                 out = self.voice.answer(text, context["call"])
-                body, advice = out["text"], out["advice"]
-                if out["error"]:
-                    # He says he needs time; the panel says why.
-                    failed, note = True, f"A LLM falhou: {out['error']}"
+                if out.get("blocked"):
+                    role, body = "system", out["blocked"]  # no call was made
+                else:
+                    body, advice = out["text"], out["advice"]
+                    if out["error"]:
+                        # He says he needs time; the panel says why.
+                        failed, note = True, f"A LLM falhou: {out['error']}"
             else:
                 body = str(self._reply(text, context) or "").strip() or "…"
-            role = "character"
         except Exception as error:  # A failed reply must not wedge the panel.
             failed = True
             role, body = "system", f"{self.character} não conseguiu responder ({type(error).__name__})."
         with self._lock:
-            self.usage["replies"] += 0 if failed else 1
+            self.usage["replies"] += 0 if failed or role != "character" else 1
             self.usage["failures"] += 1 if failed else 0
-            if "call" in context:
+            if "call" in context and not out.get("blocked"):
                 self.usage["llm_calls"] += 1
                 self.usage["tokens_in"] += out.get("tokens_in", 0)
                 self.usage["tokens_out"] += out.get("tokens_out", 0)

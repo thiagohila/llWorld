@@ -20,7 +20,9 @@ Formato: `- [ ] **título** — detalhe.` · Prioridade: 🔴 alta · 🟡 médi
 - [x] 🟡 **Etapa 3 — mente do Arthur** — `arthur/arthur/council.py`: política + justificativa, validada; mesmo interruptor e teto das tribos, interruptor próprio na aba LLMs; aba Decisões. 2026-10-21.
 - [x] 🟡 **Ver uma decisão real do Gemini** — depois de alguns 503 (sobrecarga), a primeira decisão real chegou no formato certo: `farm`, frase em inglês, justificativa em português coerente com o relatório. 2026-10-21.
 - [ ] ⚪ **Espera após erro passageiro** — como nas tribos, uma falha faz o rei esperar 40 dias de jogo (dobrando a cada falha). Um 503 logo no início deixa o reino nas regras normais por esse tempo. Talvez esperar menos em erro passageiro (503/429) do que em resposta inválida.
-- [ ] 🟡 **Etapa 4 — chat do conselheiro** — rota segura + UI; conselho vira agenda, nunca muda o mundo direto.
+- [x] 🟡 **Etapa 4 — chat do conselheiro** — `voice.py` + `Council.hear`: o rei responde em personagem e lê o conselho; o que não recusou pesa na próxima decisão; urgente antecipa; nunca muda o mundo direto. 2026-10-31.
+- [ ] 🟡 **Ver a conversa com uma LLM de verdade** — testada só com API simulada e `mock` (o `mock` responde a conversa com um texto fixo em inglês). A cota grátis do Gemini está esgotada desde 2026-10-30 (429 mesmo após 12 h): esperar renovar, ou outra chave/modelo.
+- [x] ⚪ **Cota esgotada (429)** — o Arthur (conselho e conversa) espera 1/5/15/30/60 min em vez de insistir (`quota.py`). As tribos do jogo continuam insistindo no ritmo delas. 2026-10-31.
 - [ ] ⚪ **Etapa 5 — memória, confiança, conhecimento limitado.**
 - [ ] ⚪ **Etapa 6 — avaliação pelos critérios da visão §11.**
 
@@ -57,7 +59,7 @@ Decididas em 2026-10-21 pela regra "o mais simples" — ver `../roadmap.md`.
 - [x] 🟡 **Arthur e o interruptor de LLM** — obedece o mesmo controle das tribos: `--no-ai`, botão **AI**/tecla `M` e `ai off` param o Arthur também.
 - [x] 🟡 **Conhecimento limitado** — fora da v1: Arthur vê o mesmo relatório que a mente da tribo dele receberia.
 - [x] 🟡 **Ritmo do mundo vs. conversa** — o mundo segue no ritmo escolhido; o jogador pausa se quiser.
-- [x] ⚪ **Idioma** — Arthur conversa em português (prompt e resposta); as mentes das tribos continuam como no fork.
+- [x] ⚪ **Idioma** — Arthur conversa em português (as falas e as justificativas); as instruções ao modelo estão em inglês desde a etapa 3 (conselho e conversa), como as das tribos. As mentes das tribos continuam como no fork.
 - [x] ⚪ **Modelo de LLM** — tudo no Gemini (`gemini-3.1-flash-lite`, via `.env`); `mock` só para desenvolver e testar.
 - [x] 🟡 **Orçamento de LLM com Arthur ativo** — um teto só, compartilhado entre Arthur e tribos (`MindDirector.call_cap`).
 - [x] 🟡 **População inicial** — o mundo do Arthur começa com 50 pessoas soltas + 10 do reino (o jogo sozinho segue com 100). 2026-10-21.

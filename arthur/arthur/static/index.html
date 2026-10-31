@@ -191,25 +191,28 @@ function vetoLine(v,by,label){var t=(v||[]).filter(function(x){return typeof x==
 function decCard(d,past){
   var t=(d.toward||[]).map(function(x){return "tribo "+x.id+": "+(ACTION[x.action]||x.action)}).join(" · ");
   return '<div class="card dec'+(past?" past":"")+'"><div class="top"><span class="stance">'+esc(STANCE[d.stance]||d.stance)+'</span>'+
-    '<span class="when">'+fmtDay(d.day)+(d.reason&&d.reason!=="interval"?" · "+esc({"no policy":"primeira decisão","war changed":"guerra mudou","granary low":"celeiro baixo"}[d.reason]||d.reason):"")+'</span></div>'+
+    '<span class="when">'+fmtDay(d.day)+(d.reason&&d.reason!=="interval"?" · "+esc({"no policy":"primeira decisão","war changed":"guerra mudou","granary low":"celeiro baixo","urgent advice":"conselho urgente"}[d.reason]||d.reason):"")+'</span></div>'+
     (d.intent?'<div class="intent">“'+esc(d.intent)+'”</div>':'')+
     '<div class="why">'+esc(d.rationale||"")+'</div>'+
     (t?'<div class="note">'+esc(t)+'</div>':'')+
     (d.colony?'<div class="note" style="color:var(--gold)">ordenou fundar uma colônia</div>':'')+
+    (d.advice||[]).map(function(a){return '<div class="note">conselho “'+esc(a.summary)+'”: '+(a.followed?'<b style="color:var(--gold)">seguiu</b>':'não seguiu')+'</div>'}).join("")+
     vetoLine(d.vetoes,"king","vetado pelas regras do rei")+vetoLine(d.vetoes,"game","recusado pelo jogo")+
     '<div class="note">'+esc(d.model||"")+'</div></div>';
 }
 function renderCouncil(c){
   var p=c.policy;
   $("kDecision").textContent=p?"Decisão: "+(STANCE[p.stance]||p.stance)+(p.intent?" — “"+p.intent+"”":""):(c.status==="thinking"?"Pensando na primeira decisão…":"");
-  var key=JSON.stringify([c.status,c.error,Math.ceil((c.retryIn||0)/60),(c.log||[]).length&&c.log[0].day,(c.log||[]).length]);
+  var key=JSON.stringify([c.status,c.error,(c.advice||[]).length,Math.ceil((c.retryIn||0)/60),(c.log||[]).length&&c.log[0].day,(c.log||[]).length]);
   if(key===councilKey)return;councilKey=key;
   var h='<div class="kv"><span>estado</span><span class="state '+(c.status==="on"||c.status==="thinking"?"on":c.status==="halted"||c.status==="error"||c.status==="quota"?"bad":"off")+'">'+esc(CSTATUS[c.status]||c.status)+'</span></div>'+
     '<div class="kv"><span>modelo</span><span>'+esc(c.model||"—")+'</span></div>'+
     (c.status==="quota"?'<div class="note">O provedor recusou por limite de uso. O rei espera antes de tentar de novo (1, 5, 15, 30 min, depois 1 h): próxima tentativa em ~'+Math.max(1,Math.ceil((c.retryIn||0)/60))+' min.</div>':'')+
     (c.error?'<div class="veto">'+esc(c.error)+'</div>':'')+
-    '<div class="note">O rei decide a política do reino: profissões, postura, diplomacia e invenções. Pensa a cada 40 dias de jogo, ou antes se uma guerra começa ou termina, ou se o celeiro fica baixo. Recusa guerra contra quem está em paz com o reino.</div>';
+    '<div class="note">O rei decide a política do reino: profissões, postura, diplomacia e invenções. Pensa a cada 40 dias de jogo, ou antes se uma guerra começa ou termina, ou se o celeiro fica baixo, ou se você dá um conselho urgente que ele aceita. Pesa os seus conselhos (os que ele não recusou) na decisão seguinte. Recusa guerra contra quem está em paz com o reino.</div>';
   var log=c.log||[];
+  if((c.advice||[]).length)h+='<div class="sec">Conselhos para a próxima decisão</div>'+c.advice.map(function(a){
+    return '<div class="note">'+fmtDay(a.day)+' · '+esc(a.summary)+(a.urgent?' · <b style="color:var(--gold)">urgente</b>':'')+'</div>'}).join("");
   h+=log.length?'<div class="sec">Agora</div>'+decCard(log[0],false):'<div class="note">Ainda nenhuma decisão.</div>';
   if(log.length>1)h+='<div class="sec">Antes</div>'+log.slice(1).map(function(d){return decCard(d,true)}).join("");
   $("council").innerHTML=h;

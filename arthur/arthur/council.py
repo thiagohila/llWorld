@@ -20,6 +20,11 @@ changed -- except that a war starting or ending, the granary running low or
 having no policy at all make him think at the next chance. After a 429 (the
 quota is spent) he waits on a gate shared with the chat (``quota.QuotaGate``).
 
+Advice (stage 4b): what the advisor said in the chat and the king did not
+turn down waits here (``hear``) and goes into his next report; he answers
+which pieces he follows, and the decision log keeps it. Urgent advice makes
+him think at the next chance, like a war starting.
+
 Calls run on a worker thread; results land in a queue drained on the
 simulation thread. Each world gets a new generation, so an answer about a
 world that was reset is dropped.
@@ -45,6 +50,7 @@ REARM_GRANARY = 0.40  # ...and not again until it has been back above this
 MIN_TRIGGER_DAYS = 10  # an early thought waits at least this long after the last
 MAX_TOKENS = 700
 LOG_SIZE = 30
+MAX_ADVICE = 3  # pieces of advice waiting for the next decision; older ones drop
 DIPLOMACY_DELTAS = {"war": -3.2, "peace": 2.4, "trade": 1.6, "ignore": 0.0}  # as the game's minds
 
 SYSTEM_PROMPT = """\
@@ -70,7 +76,8 @@ for you to decide from the report; nothing here is a suggestion):
 "fight": <0.35..2.2>, "flee": <0.35..2.2>, "seek_food": <0.35..2.2>, \
 "seek_mate": <0.35..2.2>, "toward": [<{{"tribe_id": id, "action": action}}>...], \
 "invent": <craft or null>, "intent": <your own sentence>}}, \
-"found_colony": <true or false>, "rationale": <your reasons>}}
+"found_colony": <true or false>, "advice_followed": <list of advice ids you \
+follow, [] if none>, "rationale": <your reasons>}}
 Weigh the report: hunger, granary, neighbours, wars and size should change \
 what you choose from one decision to the next.
 
@@ -87,6 +94,8 @@ only materials listed in the report
 found_colony: true sends part of your people (those on the kingdom's edges) \
 to found a new town, friendly to you; you stay in Camelot. Only possible when \
 the report says the kingdom is large enough; otherwise false.
+advice_followed: the report may list your advisor's counsel; you decide \
+alone whether to follow any of it.
 rationale: in Portuguese (Brazil), one or two sentences, why you chose this.
 """
 
@@ -113,6 +122,7 @@ class Council:
         self.usage: Dict[str, int] = {"calls": 0, "skipped": 0, "failures": 0,
                                       "tokens_in": 0, "tokens_out": 0, "tokens_cached": 0}
         self.generation = 0
+        self._advice_ids = 0
         self.reset(None)
 
     # -- lifecycle -------------------------------------------------------------
@@ -135,6 +145,9 @@ class Council:
         self.skips = 0
         self.wars: Tuple[int, ...] = ()
         self.granary_low = False
+        self.advice: List[Dict[str, Any]] = []
+        self.asked_advice: List[str] = []
+        self.urgent = False
         self.log.clear()
 
     def forget(self) -> bool:
@@ -144,6 +157,18 @@ class Council:
         self.rationale = ""
         self.signature = None
         return had
+
+    def hear(self, advice: Dict[str, Any], text: str, day: int) -> str:
+        """Keep a piece of advice for the next decision. Call under runner.lock."""
+        self._advice_ids += 1
+        item = {"id": f"a{self._advice_ids}", "day": day, "summary": advice["summary"],
+                "text": text.strip().replace("\n", " ")[:200], "verdict": advice["verdict"],
+                "urgent": bool(advice.get("urgent"))}
+        self.advice.append(item)
+        del self.advice[:-MAX_ADVICE]
+        if item["urgent"]:
+            self.urgent = True
+        return item["id"]
 
     # -- what the engine and the HUD read ------------------------------------------
 
@@ -188,6 +213,7 @@ class Council:
                            "scholar": policy.scholar_share, "healer": policy.healer_share},
             },
             "rationale": self.rationale,
+            "advice": [{"summary": a["summary"], "day": a["day"], "urgent": a["urgent"]} for a in self.advice],
             "log": list(self.log),
         }
 
@@ -234,6 +260,8 @@ class Council:
             reason = "war changed"
         elif fraction < LOW_GRANARY and not self.granary_low:
             reason = "granary low"
+        elif self.urgent:
+            reason = "urgent advice"
         return reason, wars, low
 
     def _maybe_think(self, day: int) -> None:
@@ -289,6 +317,12 @@ class Council:
         if custom_count(self.realm) >= limit:
             # The game refuses any more; asking would only waste tokens.
             report += f"\nYou already know the most unique crafts allowed ({limit}): set invent to null."
+        if self.advice:
+            report += "\nYour advisor's counsel since your last decision (you told him what you made of it):"
+            for item in self.advice:
+                said = {"accept": "you agreed", "consider": "you would consider it"}.get(item["verdict"], item["verdict"])
+                report += (f"\n  [{item['id']}] day {item['day']}: {item['summary']} -- his words: "
+                           f"\"{item['text']}\" ({said}{', urgent' if item['urgent'] else ''})")
         return [{"role": "system", "content": system}, {"role": "user", "content": report}]
 
     def _ask(self, day: int, house: Dict[str, Any], now: float, reason: str) -> None:
@@ -298,6 +332,8 @@ class Council:
         self.skips = 0
         self.pending = True
         self.last_day, self.last_wall = day, now
+        self.asked_advice = [item["id"] for item in self.advice]
+        self.urgent = False
         minds._recent_calls.append(now)  # Same per-minute window as the tribe minds.
         self.usage["calls"] += 1
         self.reason = reason
@@ -348,6 +384,7 @@ class Council:
         """Keep the previous policy; wait longer after each failure (like the minds)."""
         config = self.engine.minds.config
         self.error = error[:200]
+        self.urgent = any(item["urgent"] for item in self.advice)  # still waiting
         self.failures += 1
         self.usage["failures"] += 1
         factor = min(config.failure_backoff_cap, 2 ** (self.failures - 1))
@@ -398,6 +435,8 @@ class Council:
         policy.found_colony = colony  # Read by the kingdom's split rule.
         if not rationale:
             rationale = policy.intent or policy.stance
+        followed = raw.get("advice_followed")
+        policy.advice_followed = [a for a in followed if a in self.asked_advice] if isinstance(followed, list) else []
         return policy, rationale, vetoes
 
     def _apply(self, day: int, policy: Any, rationale: str, vetoes: List[Dict[str, str]]) -> None:
@@ -406,10 +445,16 @@ class Council:
         self.policy, self.rationale = policy, rationale
         self.error = ""
         self.failures, self.retry_day, self.retry_wall = 0, -1, 0.0
+        weighed = [item for item in self.advice if item["id"] in self.asked_advice]
+        self.advice = [item for item in self.advice if item["id"] not in self.asked_advice]
+        self.urgent = any(item["urgent"] for item in self.advice)
+        self.asked_advice = []
         self.log.appendleft({
             "day": day, "year": engine.clock.year, "stance": policy.stance, "intent": policy.intent,
             "rationale": rationale, "model": policy.model, "vetoes": vetoes, "reason": self.reason,
             "colony": policy.found_colony,
+            "advice": [{"summary": item["summary"], "followed": item["id"] in policy.advice_followed}
+                       for item in weighed],
             "toward": [{"id": tid, "action": action} for tid, action in policy.toward],
         })
         if previous is None or previous.stance != policy.stance or previous.intent != policy.intent:

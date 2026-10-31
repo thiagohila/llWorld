@@ -97,9 +97,18 @@ O jogo rodado sozinho continua com o padrão.
 
 - **O que ele lê:** a persona, o mesmo relatório do conselho (sem as instruções de invenção), as 3 últimas decisões dele com a justificativa, o dia e o ano, e as últimas 6 trocas da conversa. Só sabe o que o relatório diz; se não sabe, diz que não sabe.
 - **O que ele devolve:** `{"reply": "...", "advice": null | {"summary", "verdict": accept|consider|reject|clarify, "urgent"}}`. A resposta em português, em personagem; a leitura do conselho aparece embaixo da fala no HUD ("conselho: … · vai considerar"). Urgente só vale se ele aceita ou considera. Se o modelo ignora o formato mas escreve texto, o texto vale.
-- **Nunca muda o mundo:** conversar não decide nada; ele diz no máximo que vai pesar no próximo conselho. (Etapa 4b: o conselho entra na próxima decisão.)
-- **Custo:** mesmo interruptor geral, mesmo teto por minuto (cada mensagem conta), mesma espera por cota (429) do conselho, mais o interruptor próprio da conversa na aba LLMs. Bloqueado → aviso no chat, sem chamada. Falha da LLM → "Preciso pensar nisso…" em personagem e uma nota com o motivo.
+- **Nunca muda o mundo:** conversar não decide nada; ele diz no máximo que vai pesar no próximo conselho.
+- **Custo:** mesmo interruptor geral, mesmo teto por minuto (cada mensagem conta), mesma espera por cota (429) do conselho, mais o interruptor próprio da conversa na aba LLMs. Bloqueado → aviso no chat, sem chamada.
+- **Fila no teto por minuto:** tribos e conselho costumam ocupar o teto inteiro (5/min no `.env`). A mensagem não é recusada: espera vaga (até 1 min, avisando no chat) e, enquanto espera, os outros enxergam uma vaga a menos (`minds.call_cap` embrulhado), então o jogador passa na frente. No pior caso (logo no início, quando as tribos gastam tudo de uma vez) a espera chega perto de 1 min. Falha da LLM → "Preciso pensar nisso…" em personagem e uma nota com o motivo.
 - **Idioma:** as instruções ao modelo estão em inglês (como no conselho); a fala do rei é em português.
+
+**Etapa 4b — o conselho pesa na decisão** (`Council.hear`): o caminho do conselho até o mundo é chat → leitura do rei → próxima decisão → validação → política.
+
+- **O que entra:** só o que ele aceitou ou disse que vai considerar (recusado não entra), no máximo os 3 últimos. Cada item vai no relatório da próxima decisão com o resumo, as suas palavras e o que ele respondeu.
+- **O que ele devolve:** `advice_followed` — os ids que decidiu seguir (ids desconhecidos são descartados). O prompt só explica o campo; não diz para seguir.
+- **Depois:** os conselhos pesados saem da fila; a aba Decisões mostra, em cada decisão, "conselho “…”: seguiu / não seguiu", e a fila do que ainda espera.
+- **Urgente:** um conselho urgente que ele aceita ou considera antecipa a decisão (motivo "conselho urgente"), respeitando os 10 dias mínimos entre decisões antecipadas. Se a chamada falha, o conselho e a urgência continuam na fila.
+- **Fica para a etapa 5:** confiança no conselheiro e memória longa (hoje ele não lembra conselhos já pesados).
 
 ## Testes
 
@@ -107,4 +116,4 @@ O jogo rodado sozinho continua com o padrão.
 for t in tests/arthur/test_*.py; do .venv/bin/python -I -B "$t" "$PWD/arthur" | tail -1; done
 ```
 
-`test_voice.py` cobre a conversa (API simulada): resposta, prompt (persona, relatório, decisões), histórico limitado, leitura do conselho, formato ignorado, falhas, teto, cota, interruptores, erro fatal, `--no-ai`. `test_council.py` cobre a mente (API simulada, sem rede): primeira decisão, cadência, teto compartilhado, interruptores, gatilho de guerra, espera por cota (429), linha vermelha, respostas inválidas, formato do `mock`, "esquecer", erro fatal, resposta velha descartada após reset, `--no-ai`. `test_kingdom.py` cobre o reino: fundação no dia zero, mesma seed → mesmo lugar, anos de jogo, fome, ferimento, doença, Smite, colonos, divisão, vagas de LLM e reset. `test_server.py` sobe os dois servidores em portas de teste e cobre token, `Host`, `Origin` (inclusive a do mapa do jogo), tamanho do corpo, ida e volta da mensagem, interruptor de LLM compartilhado e o jogo intacto na própria porta.
+`test_voice.py` cobre a conversa (API simulada): resposta, prompt (persona, relatório, decisões), histórico limitado, leitura do conselho, formato ignorado, falhas, teto, cota, interruptores, erro fatal, `--no-ai`; e a 4b: só conselho não recusado vai para a decisão, no máximo 3, seguido/não seguido no log, urgente antecipa (com o mínimo de 10 dias), falha mantém a fila, mundo reiniciado descarta. `test_council.py` cobre a mente (API simulada, sem rede): primeira decisão, cadência, teto compartilhado, interruptores, gatilho de guerra, espera por cota (429), linha vermelha, respostas inválidas, formato do `mock`, "esquecer", erro fatal, resposta velha descartada após reset, `--no-ai`. `test_kingdom.py` cobre o reino: fundação no dia zero, mesma seed → mesmo lugar, anos de jogo, fome, ferimento, doença, Smite, colonos, divisão, vagas de LLM e reset. `test_server.py` sobe os dois servidores em portas de teste e cobre token, `Host`, `Origin` (inclusive a do mapa do jogo), tamanho do corpo, ida e volta da mensagem, interruptor de LLM compartilhado e o jogo intacto na própria porta.
