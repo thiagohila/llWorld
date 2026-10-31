@@ -198,7 +198,7 @@ class Advisor:
             return {"ok": True}
         if context.get("queued"):
             self._add("system", "O teto de chamadas por minuto está ocupado (tribos e conselho também usam). "
-                                "Sua mensagem é a próxima da fila; pode levar até 1 min.")
+                                "Sua mensagem é a próxima da fila; pode levar até ~1 min.")
         pending = self._add("character", "", name=self.character, day=context["day"], pending=True)
         threading.Thread(
             target=self._answer, args=(pending.id, text, context),

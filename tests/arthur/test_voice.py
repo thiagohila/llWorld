@@ -22,7 +22,8 @@ def check(name, cond, extra=""):
     if not cond: fails.append(name)
 
 # --- fakes ---------------------------------------------------------------------
-fork_minds.chat = lambda **kw: ChatResult(text=json.dumps({"stance": "farm", "intent": "Grow grain."}), status=200)
+tribe_calls = []
+fork_minds.chat = lambda **kw: tribe_calls.append(1) or ChatResult(text=json.dumps({"stance": "farm", "intent": "Grow grain."}), status=200)
 council_calls = []
 council_answer = {"followed": [], "result": None}
 def fake_council(**kw):
@@ -225,6 +226,13 @@ waiting = advisor.handle("messages", {"since": last})["messages"]
 check("busy budget: the message waits (pending), no call yet", len(voice_calls) == n and any(m["pending"] for m in waiting), waiting)
 check("the panel says the message is queued", any(m["role"] == "system" and "fila" in m["text"] for m in waiting), waiting)
 check("meanwhile the others see one slot less (the player goes first)", minds.call_cap() == 0 and voice._cap() == 1)
+t = len(tribe_calls)
+with runner.lock:  # the message's thread cannot grab the slot while we look
+    minds._recent_calls.popleft()  # a slot frees up...
+    for _ in range(minds.config.think_interval_days * 2): engine.step()
+    check("tribe minds really yield that slot to the waiting message", len(tribe_calls) == t and voice._waiting == 1,
+          (t, len(tribe_calls)))
+    minds._recent_calls.append(time.monotonic())
 minds._cap_override = None  # room frees up
 for _ in range(400):
     if not advisor._busy: break

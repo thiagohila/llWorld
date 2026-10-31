@@ -29,7 +29,7 @@ from .bridge import brief_tribe, chat, extract_json
 from .quota import QuotaGate
 
 HISTORY_EXCHANGES = 6
-BUDGET_WAIT = 60.0  # seconds a message may wait for room in the per-minute budget
+BUDGET_WAIT = 75.0  # a slot frees when the oldest call leaves the 60 s window: always within this
 MAX_TOKENS = 500
 MAX_REPLY = 1200
 VERDICTS = ("accept", "consider", "reject", "clarify")
@@ -206,7 +206,7 @@ class KingVoice:
     def answer(self, text: str, call: Dict[str, Any]) -> Dict[str, Any]:
         """Ask the model (worker thread, no lock held)."""
         if not self._claim():
-            return {"blocked": "O teto de chamadas por minuto ficou cheio por 1 min (as tribos e o conselho "
+            return {"blocked": "O teto de chamadas por minuto ficou cheio por mais de 1 min (as tribos e o conselho "
                                "também usam). Tente de novo, ou aumente o teto na aba LLMs."}
         messages = call["messages"] + [{"role": "user", "content": text}]
         result = chat(messages=messages, model=call["house"], timeout=call["timeout"], retries=1,
