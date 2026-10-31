@@ -1,6 +1,6 @@
 # Pendências — jogo (fork `worldbox/`)
 
-Estado em 2026-10-21 (fork em `a4bc380`): o jogo funciona; o que segue são riscos, limitações e lacunas para a próxima fase. Problemas e limitações encontrados no fork. Corrigir aqui significa **editar o fork** (commit no submódulo) ou contornar pelo `arthur/` — decidir caso a caso.
+Estado em 2026-10-21 (fork em `9415d94`): o jogo funciona; o que segue são riscos, limitações e lacunas para a próxima fase. Problemas e limitações encontrados no fork. Corrigir aqui significa **editar o fork** (commit no submódulo) ou contornar pelo `arthur/` — decidir caso a caso.
 
 Formato: `- [ ] **título** — detalhe. Onde. Ref.` · Prioridade: 🔴 alta · 🟡 média · ⚪ baixa. Ao resolver, marque `[x]` e anote commit/data.
 
