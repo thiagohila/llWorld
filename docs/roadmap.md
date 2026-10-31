@@ -52,7 +52,7 @@ llWorld/
 | Decidir pela tribo do Arthur | subclasse de `ai.minds.MindDirector` atribuída a `engine.minds`; validar com `parse_policy` / `TribePolicy` | **pronto** [código] |
 | Chamar a LLM | `ai.client.chat()` com as fontes do `.env` (DeepSeek, OpenAI, compatível com OpenAI, `mock`); `ChatResult` traz `status`, `fatal`, tokens | **pronto** [código] |
 | Ligar/desligar LLM em jogo | `engine.minds.paused` / `set_paused()`, `set_call_cap()`, `forget_policies()`; HTTP `/control?action=ai` / `ai_cap` / `ai_forget`; botão **AI** e tecla `M` no HUD; `ai on/off/cap/forget` no terminal | **pronto** [código] |
-| Controlar custo | o conselho do Arthur **usa o mesmo teto** (`call_cap`, `calls_last_minute`; registra as próprias chamadas na mesma janela `minds._recent_calls`), **respeita `paused`**, o cadenciamento das mentes (`think_interval_days`, `min_think_seconds`, pular se nada mudou) e o backoff; erro fatal para todas as mentes (`minds.halted`) | **pronto** [executado] |
+| Controlar custo | o conselho do Arthur **usa o mesmo teto** (`call_cap`, `calls_last_minute`; registra as próprias chamadas na mesma janela `minds._recent_calls`), **respeita `paused`**, o cadenciamento das mentes (`think_interval_days`, `min_think_seconds`, pular se nada mudou) e o backoff; erro fatal para todas as mentes (`minds.halted`). A conversa (etapa 4) usa o mesmo teto e espera vaga; enquanto espera, `minds.call_cap` envolvido na instância mostra uma vaga a menos para tribos e conselho (o jogador passa na frente). 429 (cota esgotada): conselho e conversa esperam num portão próprio do Arthur (`quota.py`), lendo `ChatResult.status` | **pronto** [executado] |
 | Decidir pela tribo do Arthur (feito) | em vez de subclasse: `engine.minds.policy_for` envolvido na instância devolve a política do conselho para o reino (sempre o mesmo objeto, que o motor edita); a diplomacia (`toward`) é empurrada pelo próprio conselho, com os mesmos valores diários do jogo; "esquecer decisões" do mapa também apaga a dele | **pronto** [executado] |
 | Fundar o reino | `society.founding.found_tribe` / `settle_people` (extraídos de `LiveState.found_civ`, que agora os usa; comportamento idêntico) | **pronto** [executado] |
 | Arthur fixo como chefe | patch por fora em `society.culture.choose_chieftain` (chamado via módulo), só para o agente marcado `llworld_king` | **pronto** [executado] |
@@ -62,6 +62,7 @@ llWorld/
 | Reset do mundo | `engine.reset` envolvido na instância: refunda o reino; as marcas ficam nos objetos, não nos ids | **pronto** [executado] |
 | Marcar o rei no mapa | `LiveState.feature(agent_id, label, kind)` / `unfeature` → `featured` no `/state`; o mapa desenha anel dourado + plaquinha (coroa para `kind="king"`) e ponto no minimapa | **pronto** [executado] |
 | Centralizar o mapa nele | `postMessage({type:"worldbox:focus", id})` do HUD do Arthur para o frame; o mapa só ouve a janela-mãe e só move a vista | **pronto** [executado] |
+| Conversa com o rei | `ai.minds._brief_tribe` (o mesmo relatório do conselho, sem as linhas de invenção), `chat()` com `json_mode`, `extract_json`; nada do que a conversa devolve toca o motor — o conselho recebido vai para a fila do conselho (`Council.hear`) | **pronto** [executado com API simulada e `mock`] |
 | Chat (HTTP) | servidor próprio do Arthur (`arthur/arthur/server.py`, porta 8766, mesmo processo): `/api/state`, `/api/messages`, `/api/send`, `/api/llm`; token + `Host` + `Origin` + limite de corpo | **pronto** [executado] |
 | UI do chat | HUD próprio do Arthur (`arthur/arthur/static/index.html`) com o mapa do jogo num frame; o HUD do jogo fica igual. Alternativa disponível e não usada: painéis genéricos no HUD do jogo (`LiveServer.add_extension`) | **pronto** [executado] |
 | Importar o fork | `arthur/arthur/bridge.py` — único ponto que põe o fork no `sys.path` e importa dele | **pronto** |
@@ -92,7 +93,7 @@ Cada etapa é pequena, testável offline com a mente `mock` e não muda a regres
 | 5 | **Memória, confiança, conhecimento limitado** | conselhos e consequências lembrados; Arthur não sabe o que não viu |
 | 6 | **Avaliação** pelos critérios da visão §11 | cenários roteirizados passam |
 
-Design detalhado das etapas 3–5 (camadas de contexto, contratos de saída, confiança): `rascunhos/arthur-design.md`. A etapa 3 usou só a parte do conselho, em versão mínima; revisar conversa, memória e confiança antes das etapas 4–5.
+Design detalhado das etapas 3–5 (camadas de contexto, contratos de saída, confiança): `rascunhos/arthur-design.md`. As etapas 3 e 4 usaram versões mínimas do conselho e da conversa (nota no topo do rascunho); revisar memória e confiança antes da etapa 5.
 
 **Próxima — etapa 5 (memória, confiança, conhecimento limitado):** a combinar. Antes: ver a conversa com uma LLM de verdade (a cota grátis do Gemini está esgotada; esperar renovar ou usar outra chave/modelo). Detalhes da etapa 4 em `../arthur/README.md`.
 

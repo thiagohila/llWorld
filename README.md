@@ -16,7 +16,9 @@ Arthur listens, but decides for himself.
   (http://127.0.0.1:8766/, with the game map framed beside it), built on the
   game's public interfaces. Arthur's kingdom is founded on day zero; he is its
   fixed, immortal king and decides its policy with an LLM (Gemini), with a
-  rationale you can read. Run `python arthur/run.py`.
+  rationale you can read. You talk to him as his advisor: he answers in
+  character and weighs the advice he did not turn down at his next decision.
+  Run `python arthur/run.py`.
 - `docs/` — reference for the fork, environment, security, performance,
   checklists and the roadmap.
 
@@ -42,6 +44,7 @@ With Arthur (from the llWorld root): `python arthur/run.py` opens his HUD;
 
 ## Status
 
-Experimental. The game is stable. Arthur: kingdom and the king's own
-decisions work (stages 1–3); talking to him for real is stage 4. Plan in
-`docs/roadmap.md`.
+Experimental. The game is stable. Arthur: kingdom, the king's own decisions
+and the advisor chat work (stages 1–4; the chat is not yet seen with a real
+LLM, the free Gemini quota being spent). Next: memory and trust (stage 5).
+Plan in `docs/roadmap.md`.

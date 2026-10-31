@@ -35,7 +35,7 @@
 
 ## Rascunhos
 
-- `rascunhos/arthur-design.md` — ideias de design para a camada do Arthur (contexto, contratos, confiança). **Não aprovado.** A etapa 3 usou uma versão mínima (nota no topo); revisar as seções de conversa, memória e confiança antes das etapas 4–5.
+- `rascunhos/arthur-design.md` — ideias de design para a camada do Arthur (contexto, contratos, confiança). **Não aprovado.** As etapas 3 e 4 usaram versões mínimas (nota no topo); revisar memória e confiança antes da etapa 5.
 
 ## Convenções destes docs
 

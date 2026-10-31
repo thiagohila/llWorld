@@ -4,7 +4,7 @@ Protótipo de jogo: um mundo simulado que evolui sozinho, com personagens movido
 
 Princípio: **a simulação manda nas regras do mundo; a LLM propõe decisões de alto nível que o jogo valida e executa.** Nada narrado pode contradizer o estado da simulação.
 
-## Fase atual (2026-10-21)
+## Fase atual (2026-10-31)
 
 - **Concluída — o jogo:** o fork roda como veio, com melhorias (HUD e arte nova, −27–33% de custo por dia, poderes com feedback, Smite corrigido, mentes de LLM com controle de custo e fontes grátis — Gemini testado de verdade).
 - **Próxima — o projeto:** implementar o `arthur/` (conselheiro do Rei Arthur) e ajustar as camadas/interfaces entre ele e o jogo. Plano por etapas em `docs/roadmap.md`. Etapas 0 (decisões: **tudo no mais simples, tudo no Gemini**), 1 (esqueleto + chat de ponta a ponta, sem LLM) 2 (reino do Arthur: chefe fixo e imortal, no mapa) 3 (mente do Arthur: decide a política do reino, `arthur/arthur/council.py`) e 4 (conversa: o rei responde e pesa o conselho, `arthur/arthur/voice.py`) feitas. Próxima: etapa 5 (memória, confiança, conhecimento limitado), a combinar.

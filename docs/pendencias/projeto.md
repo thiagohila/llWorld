@@ -42,7 +42,7 @@ Regra geral (Thiago, 2026-10-21): **tudo na opção mais simples para este iníc
 - [ ] 🟡 **Correções do fork (`jogo.md`)** — decidir caso a caso, quando cada uma atrapalhar a próxima etapa.
 - [x] 🟡 **Como o `arthur/` importa o fork** — `sys.path` num único ponto do entrypoint. 2026-10-21.
 - [x] 🟡 **Rascunho de design da IA (parte do conselho)** — a etapa 3 usou a versão mínima: só o loop de conselho, sem memória/agenda/confiança. 2026-10-21.
-- [ ] 🟡 **Rascunho de design da IA (conversa, memória, confiança)** — revisar as seções 4, 5 (loop de conversa) e 7 de `docs/rascunhos/arthur-design.md` antes das etapas 4–5, simplificando para a v1.
+- [ ] 🟡 **Rascunho de design da IA (memória, confiança)** — a conversa (seção 5) virou a etapa 4 em versão mínima; falta revisar as seções 4 (L3 memória, L4 agenda) e 7 (confiança) de `docs/rascunhos/arthur-design.md` antes da etapa 5, simplificando para a v1.
 
 ## Decisões de produto (protótipo do Arthur)
 
