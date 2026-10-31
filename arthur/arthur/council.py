@@ -61,13 +61,16 @@ The report below calls your kingdom a "tribe" and you its "mind"; that is \
 the simulator's wording. Use only tribe_id values, places and materials it \
 gives you.
 
-Reply with one JSON object and nothing else:
-{{"policy": {{"stance":"farm","warrior_share":0.12,"farmer_share":0.40,\
-"scholar_share":0.10,"healer_share":0.08,"cohesion":0.7,"fight":0.8,\
-"flee":1.1,"seek_food":1.2,"seek_mate":1.0,\
-"toward":[{{"tribe_id":2,"action":"trade"}}],"invent":null,\
-"intent":"Fill the granaries before winter."}},
- "rationale":"Uma ou duas frases, em português, explicando a decisão."}}
+Reply with one JSON object and nothing else, in this shape (the <...> are \
+for you to decide from the report; nothing here is a suggestion):
+{{"policy": {{"stance": <stance>, "warrior_share": <0..1>, "farmer_share": <0..1>, \
+"scholar_share": <0..1>, "healer_share": <0..1>, "cohesion": <0..1>, \
+"fight": <0.35..2.2>, "flee": <0.35..2.2>, "seek_food": <0.35..2.2>, \
+"seek_mate": <0.35..2.2>, "toward": [<{{"tribe_id": id, "action": action}}>...], \
+"invent": <craft or null>, "intent": <your own sentence>}}, \
+"found_colony": <true or false>, "rationale": <your reasons>}}
+Weigh the report: hunger, granary, neighbours, wars and size should change \
+what you choose from one decision to the next.
 
 Rules for policy:
 - stance is one of: survive, farm, expand, defend, research, raid, trade
@@ -79,6 +82,9 @@ Rules for policy:
 "effect": food|combat|research|health|fertility|medicine, "why":...}}, using \
 only materials listed in the report
 - intent: one short sentence in English, as a king would say it
+found_colony: true sends part of your people (those on the kingdom's edges) \
+to found a new town, friendly to you; you stay in Camelot. Only possible when \
+the report says the kingdom is large enough; otherwise false.
 rationale: in Portuguese (Brazil), one or two sentences, why you chose this.
 """
 
@@ -266,6 +272,10 @@ class Council:
             # The game's report reads the last intent from its own table, where
             # Arthur's policy does not live.
             report += f"\nYour last decision (day {self.policy.thought_day}): {self.policy.stance} -- {self.policy.intent}"
+        split = self.engine.config.groups.split_size
+        if self.realm.size >= split:
+            report += (f"\nYour kingdom has {self.realm.size} people; other peoples split at {split}. "
+                       "You may found a colony (found_colony: true) or keep everyone together.")
         limit = self.engine.config.ai.max_custom_techs
         if custom_count(self.realm) >= limit:
             # The game refuses any more; asking would only waste tokens.
@@ -371,6 +381,11 @@ class Council:
             if problem:
                 vetoes.append({"by": "game", "text": f"invention dropped: {problem}"})
                 policy.invent = None
+        colony = raw.get("found_colony") is True
+        if colony and realm.size < engine.config.groups.split_size:
+            vetoes.append({"by": "game", "text": f"colony refused: only {realm.size} people"})
+            colony = False
+        policy.found_colony = colony  # Read by the kingdom's split rule.
         if not rationale:
             rationale = policy.intent or policy.stance
         return policy, rationale, vetoes
@@ -384,6 +399,7 @@ class Council:
         self.log.appendleft({
             "day": day, "year": engine.clock.year, "stance": policy.stance, "intent": policy.intent,
             "rationale": rationale, "model": policy.model, "vetoes": vetoes, "reason": self.reason,
+            "colony": policy.found_colony,
             "toward": [{"id": tid, "action": action} for tid, action in policy.toward],
         })
         if previous is None or previous.stance != policy.stance or previous.intent != policy.intent:

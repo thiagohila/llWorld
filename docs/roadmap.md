@@ -4,7 +4,7 @@ Atualizado em 2026-10-21. O *quê* está em `../llWorld-visao-produto.md`; ideia
 
 ## Estado atual
 
-### O jogo — fork `worldbox/` em `a5409d3` (funcionando)
+### O jogo — fork `worldbox/` em `a4bc380` (funcionando)
 
 Roda como veio do `ryfcx/worldbox`, com melhorias pontuais — nenhuma regra de simulação mudou (md5 de regressão idêntico desde o início):
 
@@ -18,6 +18,7 @@ Roda como veio do `ryfcx/worldbox`, com melhorias pontuais — nenhuma regra de 
 | LLM em jogo | interruptor, teto por minuto e nº de tribos (3) ajustáveis; selo azul nas tribos com LLM | `e405b54`, `e228169` |
 | Para o Arthur | pessoas destacadas no mapa (`LiveState.feature`) + foco por mensagem; fundação de tribo reutilizável (`society/founding.py`) | `bbbea3a` |
 | Mapa | plantações, casinhas, invenções, guerras, amizades, surtos e ruínas no mapa; bonecos andando suave entre atualizações; limite de invenções próprias 8 → 100 | `a5409d3` |
+| Eras e casas | 6 eras depois do Ferro (até Information Age: Moon Landing, Internet, Genetics); casas opcionais que espalham as pessoas pelo domínio (ligadas no mundo do Arthur) | `a4bc380` |
 
 Ainda em aberto no jogo: segurança do servidor local (CSRF, DNS rebinding), determinismo com duas chaves, sem suíte de testes — ver `pendencias/jogo.md`.
 
@@ -26,7 +27,7 @@ Ainda em aberto no jogo: segurança do servidor local (CSRF, DNS rebinding), det
 - Docs de referência do fork (`docs/worldbox/01..08`), ambiente e versões (`ambiente.md`), checklists, agentes `worldbox-guide` e `sim-runner`.
 - `.venv` com Python 3.14; remotes: `thiagohila/llWorld` e `thiagohila/worldbox` (push para o upstream bloqueado).
 - `arthur/` (Arthur) existe desde a etapa 1: HUD e servidor próprios (porta 8766, com o mapa do jogo num frame), ponte de import, conversa com respostas de teste sem LLM — ver `../arthur/README.md`.
-- Etapa 2: o **reino do Arthur** é fundado no dia zero (`arthur/arthur/kingdom.py`): Arthur Pendragon chefe fixo e imortal, reino que não se divide nem se dissolve, fora das vagas de LLM, com plaquinha dourada no mapa e botão "Onde está o rei?" no HUD do Arthur.
+- Etapa 2: o **reino do Arthur** é fundado no dia zero (`arthur/arthur/kingdom.py`): Arthur Pendragon chefe fixo e imortal, reino que não se divide sozinho nem se dissolve, fora das vagas de LLM, com plaquinha dourada no mapa e botão "Onde está o rei?" no HUD do Arthur.
 - Etapa 3: a **mente do Arthur** (`arthur/arthur/council.py`) decide a política do reino — persona + o mesmo relatório que as tribos recebem → política no formato do jogo + justificativa em português; validada pelo jogo (`parse_policy`) e pelas regras do rei (sem tribo desconhecida, sem invenção impossível, sem guerra contra quem está em paz). Aba **Decisões** no HUD do Arthur.
 
 ## Camadas e interfaces
@@ -55,7 +56,7 @@ llWorld/
 | Fundar o reino | `society.founding.found_tribe` / `settle_people` (extraídos de `LiveState.found_civ`, que agora os usa; comportamento idêntico) | **pronto** [executado] |
 | Arthur fixo como chefe | patch por fora em `society.culture.choose_chieftain` (chamado via módulo), só para o agente marcado `llworld_king` | **pronto** [executado] |
 | Arthur imortal (sem sucessão) | por fora: `KingNeeds` (saúde nunca abaixo de 1, nem na hora do combate), imunidade permanente a todas as doenças, idade fixa; Smite do mapa desvia dele (envolve `LiveState.act`) — nenhuma morte ou abate é contado para ele | **pronto** [executado] |
-| Reino não se divide nem se dissolve | patch por fora em `GroupRegistry.try_split` / `find_unviable`, só para a tribo marcada `llworld_realm`; se só o rei sobrar, chegam 6 colonos | **pronto** [executado] |
+| Reino só se divide quando o rei manda; nunca se dissolve | patch por fora em `GroupRegistry.try_split` / `find_unviable`, só para a tribo marcada `llworld_realm`; acima do tamanho de divisão o rei pode decidir `found_colony` e a divisão do próprio jogo roda uma vez, sem levar o rei, com a colônia começando amiga (+40); se só o rei sobrar, chegam 6 colonos | **pronto** [executado] |
 | Reino fora das mentes de LLM | `engine.minds._eligible` reimplementado na instância sem o reino (as 3 vagas vão para as outras tribos) | **pronto** [executado] |
 | Reset do mundo | `engine.reset` envolvido na instância: refunda o reino; as marcas ficam nos objetos, não nos ids | **pronto** [executado] |
 | Marcar o rei no mapa | `LiveState.feature(agent_id, label, kind)` / `unfeature` → `featured` no `/state`; o mapa desenha anel dourado + plaquinha (coroa para `kind="king"`) e ponto no minimapa | **pronto** [executado] |
@@ -68,7 +69,7 @@ llWorld/
 
 Regra: **o mais simples para começar.** Detalhes em `pendencias/projeto.md`.
 
-- Reino fundado para Arthur no início; Arthur imortal; o reino não se divide nem se dissolve.
+- Reino fundado para Arthur no início; Arthur imortal; o reino não se dissolve e só se divide quando o rei decide fundar uma colônia (revisto em 2026-10-30: antes não se dividia nunca, e em 70 anos o reino chegou a 65% do mundo e travou os nascimentos no teto de 1.500).
 - Tudo no Gemini (`gemini-3.1-flash-lite`); `mock` para desenvolver e testar.
 - Arthur obedece o mesmo interruptor de LLM das tribos e divide o mesmo teto de chamadas.
 - Sem conhecimento limitado na v1: Arthur vê o relatório da própria tribo.

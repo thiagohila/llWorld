@@ -163,6 +163,41 @@ council.signature = None; council.last_day -= interval; council.retry_day = -1; 
 days(2)
 check("flat JSON (the mock's shape) accepted", council.policy.intent == "Flat answer." and council.rationale == "Flat answer.")
 
+# --- colonies are the king's decision ----------------------------------------------------
+from arthur.bridge import settle_people
+from arthur.kingdom import KING as KING_MARK
+split = engine.config.groups.split_size
+answer["text"] = json.dumps({"policy": {"stance": "farm", "intent": "Stay together."}, "found_colony": True, "rationale": "x"})
+small = realm.size < split
+council.signature = None; council.last_day -= interval; council.retry_day = -1; council.retry_wall = 0
+days(2)
+if small:
+    check("colony refused while the kingdom is small", any(v["by"] == "game" and "colony" in v["text"] for v in council.log[0]["vetoes"]), council.log[0]["vetoes"])
+settle_people(engine, realm, kingdom.king.x, kingdom.king.y, split + 20 - realm.size, "Pendragon", houses=[""])
+days(3)
+check("big kingdom does not split by itself", engine.groups.get(realm.id) is realm and realm.size >= split, realm.size)
+check("report tells him he may found a colony", "found a colony" in council._messages()[1]["content"])
+before_groups = {g.id for g in engine.groups.active()}
+size_before = realm.size
+answer["text"] = json.dumps({"policy": {"stance": "expand", "intent": "Settle the far hills."}, "found_colony": True, "rationale": "Colônia."})
+council.signature = None; council.last_day -= interval; council.retry_day = -1; council.retry_wall = 0
+days(4)
+new = [g for g in engine.groups.active() if g.id not in before_groups and g.parent_group_id == realm.id]
+check("ordered colony is founded", len(new) >= 1 and realm.size < size_before, (len(new), size_before, realm.size))
+check("king stays home", kingdom.king.group_id == realm.id and realm.chieftain_id == kingdom.king.id)
+if new:
+    check("colony starts friendly", engine.diplomacy.relation(realm.id, new[0].id) > 0, engine.diplomacy.relation(realm.id, new[0].id))
+    check("colony narrated", any("sent" in e.message and "found the" in e.message for e in engine.events.recent(200)))
+check("one order, one colony", not getattr(realm, "llworld_colony_order", False))
+setattr(realm, "llworld_colony_order", True)  # an order the realm is too small to carry out
+if realm.size < split:
+    days(2)
+    check("an order that cannot be carried out lapses", not getattr(realm, "llworld_colony_order", False)
+          and any("did not set out" in e.message for e in engine.events.recent(100)))
+else:
+    setattr(realm, "llworld_colony_order", False)
+check("decision log marks the order", any(d.get("colony") for d in council.log))
+
 # --- the craft limit is told, so he stops asking ---------------------------------------
 known = realm.knowledge.known
 fake = {f"custom_test_{i}" for i in range(engine.config.ai.max_custom_techs)}

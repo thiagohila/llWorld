@@ -211,7 +211,7 @@ class ArthurServer:
                 "what": "o rei responde ao conselheiro",
                 "model": chat["model"],
                 "state": master_state(None if chat["enabled"] else "desligado (só a conversa)")
-                         if chat["uses_llm"] else ("ligado, sem LLM (etapa 1)" if chat["enabled"] else "desligado (só a conversa)"),
+                         if chat["uses_llm"] else ("ligado, texto de teste sem LLM (até a etapa 4)" if chat["enabled"] else "desligado (só a conversa)"),
                 "control": "própria",
                 "enabled": chat["enabled"],
                 "usage": {"calls": chat["llm_calls"], "failures": chat["failures"], "messages": chat["messages"],

@@ -10,9 +10,12 @@ outside, without editing the game:
   every disease and his age is pinned, so neither wounds, plague, hunger nor
   old age take him -- and no death or kill is ever counted for him. Smite
   from the map is aimed around him (``LiveState.act``).
-* **One realm** -- ``GroupRegistry.try_split`` and ``find_unviable`` skip the
-  kingdom, so it never splinters or disbands. If everyone but the king dies,
-  a few settlers come to him.
+* **One realm, split by the king** -- the kingdom never splinters on its own
+  (``GroupRegistry.try_split``) nor disbands (``find_unviable``). Once it is
+  past the game's split size, the king may decide to found a colony
+  (``found_colony`` in his council's decision): the game's own split then
+  runs once, the king stays home, and the colony starts friendly. If
+  everyone but the king dies, a few settlers come to him.
 * **Arthur's own mind** -- the realm takes no slot of the game's LLM minds;
   its policy comes from Arthur's council (``council.py``), handed to the
   engine through ``engine.minds.policy_for``.
@@ -33,6 +36,9 @@ from .persona import ARTHUR
 
 REALM = "llworld_realm"  # set on the kingdom's Group
 KING = "llworld_king"  # set on the king's Agent
+COLONY_ORDER = "llworld_colony_order"  # on the realm: the king ordered a colony
+COLONY_OF = "llworld_colony_of"  # on a new colony, until the kingdom greets it
+COLONY_GOODWILL = 60.0  # offsets the game's -20 for splinters: starts at +40
 SETTLERS = 6  # who comes when the king is left alone
 SITE_SAMPLES = 400
 
@@ -88,9 +94,16 @@ def install_rules() -> None:
     try_split = GroupRegistry.try_split
 
     def no_split(self, group, members, day, rng):
-        if _is_realm(group):
+        if not _is_realm(group):
+            return try_split(self, group, members, day, rng)
+        if not getattr(group, COLONY_ORDER, False):
             return None
-        return try_split(self, group, members, day, rng)
+        # The game's own split, with the king kept out of the leavers.
+        colony = try_split(self, group, [m for m in members if not _is_king(m)], day, rng)
+        if colony is not None:
+            setattr(group, COLONY_ORDER, False)
+            setattr(colony, COLONY_OF, group.id)
+        return colony
 
     GroupRegistry.try_split = no_split
 
@@ -206,9 +219,33 @@ class Kingdom:
         if king is None or group is None:
             return
         engine = self.engine
+        if getattr(group, COLONY_ORDER, False):
+            # Ordered yesterday and not carried out today (the kingdom shrank
+            # below the split size): the order lapses rather than splitting
+            # the kingdom on its own some day later.
+            setattr(group, COLONY_ORDER, False)
+            engine.events.record(
+                engine.clock.day, EventKind.SOCIETY,
+                f"{self.persona['title']} {king.name}'s colony did not set out: the {group.name} is too small now",
+                agent_id=king.id,
+            )
         king.age_days = self.age_days
         if king.group_id != group.id:  # Never expected; repaired rather than lost.
             king.group_id = group.id
+        for colony in engine.groups.active():
+            if getattr(colony, COLONY_OF, None) == group.id:
+                setattr(colony, COLONY_OF, None)
+                engine.diplomacy.adjust(group.id, colony.id, COLONY_GOODWILL)
+                engine.events.record(
+                    engine.clock.day, EventKind.SOCIETY,
+                    f"{self.persona['title']} {king.name} sent {colony.size} people to found the "
+                    f"{colony.name}, friends of the {group.name}",
+                    agent_id=king.id,
+                )
+        policy = self.council.policy
+        if policy is not None and getattr(policy, "found_colony", False):
+            policy.found_colony = False  # One order, one colony.
+            setattr(group, COLONY_ORDER, True)
         alive = sum(1 for agent in engine.agents if agent.group_id == group.id and agent.alive)
         if alive <= 1:
             settle_people(engine, group, king.x, king.y, SETTLERS, self.persona["family"], houses=[""])

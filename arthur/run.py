@@ -24,17 +24,31 @@ from arthur.kingdom import Kingdom
 from arthur.server import ArthurServer
 
 INITIAL_POPULATION = 50  # people scattered at the start, before any tribe
+# People live in houses spread over their tribe's land, and roam further from
+# home than in the stock game (radius 14, cohesion 0.55). LLM-played tribes
+# (and the king) still set their own cohesion/radius in their policy.
+HOUSES = True
+TERRITORY_RADIUS = 22
+COHESION_CHANCE = 0.45
+
+
+def arthur_config(config: Config) -> Config:
+    """The game's config with Arthur's world settings on top."""
+    replace = dataclasses.replace
+    return replace(
+        config,
+        agents=replace(config.agents, initial_population=INITIAL_POPULATION),
+        settlements=replace(config.settlements, houses=HOUSES),
+        groups=replace(config.groups, territory_radius=TERRITORY_RADIUS, cohesion_chance=COHESION_CHANCE),
+    )
 
 
 def build(seed: Optional[int] = None, no_ai: bool = False, port: int = 8765, arthur_port: int = 8766):
     """The game (engine, runner, live map), with Arthur's kingdom founded on
     day zero, and Arthur's server; nothing started yet."""
-    config = Config()
-    # Arthur's world starts smaller than the game's default (100): 50 wanderers,
-    # plus the kingdom's own people (persona["people"]).
-    config = dataclasses.replace(
-        config, agents=dataclasses.replace(config.agents, initial_population=INITIAL_POPULATION)
-    )
+    # Smaller start than the game's 100 (plus the kingdom's own people), houses,
+    # wider roaming: see arthur_config.
+    config = arthur_config(Config())
     if no_ai:
         config = dataclasses.replace(config, ai=dataclasses.replace(config.ai, enabled=False))
     engine = SimulationEngine(config=config, seed=seed)

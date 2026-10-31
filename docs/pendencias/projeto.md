@@ -48,7 +48,12 @@ Decididas em 2026-10-21 pela regra "o mais simples" — ver `../roadmap.md`.
 
 - [x] 🔴 **Origem do reino** — um reino fundado para Arthur no início do mundo (mesmo mecanismo do `/found`).
 - [x] 🔴 **Morte de Arthur** — imortal no protótipo; sem sucessão.
-- [x] 🔴 **Divisão e dissolução do reino** — o reino não se divide nem se dissolve.
+- [x] 🔴 **Divisão e dissolução do reino** — não se dissolve; só se divide quando o rei decide fundar uma colônia (2026-10-30; antes nunca se dividia e engoliu o mundo). Sem teto de tamanho do reino; o teto de 1.500 do mundo fica por hora.
+- [x] 🟡 **Gente espalhada pelo território** — casas reais dentro do domínio (opção do jogo, ligada no mundo do Arthur) + raio 22 e coesão 0,45 no mundo do Arthur. Medido: espalhamento +37%, população −19%, escaramuças entre vizinhos. 2026-10-30.
+- [ ] ⚪ **Raio por tribo com LLM** — tribos com LLM (e o rei) usam o raio da própria política (8 a 24 pela coesão), não o 22 do mundo do Arthur.
+- [x] 🟡 **Eras até os tempos atuais** — 6 eras novas, 24 tecnologias, até a Information Age (com Moon Landing). 2026-10-30.
+- [ ] ⚪ **LLM criando eras novas** — ideia do Thiago: depois da última era, a LLM nomeia e tematiza a próxima. Precisa de regra do jogo para quando uma era abre (ex.: N invenções na era atual + pontos de pesquisa) e de como entra na lista de eras.
+- [ ] ⚪ **Paralelizar a simulação em vários núcleos** — hoje 1 núcleo (Python/GIL); com 1.500 pessoas um dia custa ~100 ms e o jogo roda no máximo. Possível separando fases de "pensar" (paralelo) e "agir" (em ordem), mas é projeto grande e mexe na reprodutibilidade. Só curiosidade por ora.
 - [x] 🟡 **Arthur e o interruptor de LLM** — obedece o mesmo controle das tribos: `--no-ai`, botão **AI**/tecla `M` e `ai off` param o Arthur também.
 - [x] 🟡 **Conhecimento limitado** — fora da v1: Arthur vê o mesmo relatório que a mente da tribo dele receberia.
 - [x] 🟡 **Ritmo do mundo vs. conversa** — o mundo segue no ritmo escolhido; o jogador pausa se quiser.

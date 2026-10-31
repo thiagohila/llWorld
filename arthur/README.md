@@ -65,13 +65,18 @@ python arthur/run.py --no-open --port 8765 --arthur-port 8766
 
 **Etapa 1:** HUD e servidor próprios funcionando de ponta a ponta. A conversa ainda responde com um texto de teste (`advisor.placeholder_reply`), sem LLM, até a etapa 4.
 
-**População inicial:** o mundo do Arthur começa com **50** pessoas soltas (`INITIAL_POPULATION` em `run.py`; o padrão do jogo é 100) mais as 10 do reino — 60 no dia zero. O jogo rodado sozinho continua com 100.
+**O mundo do Arthur** (`run.py:arthur_config`) difere do jogo padrão em:
+- **População inicial:** **50** pessoas soltas (`INITIAL_POPULATION`; padrão 100) mais as 10 do reino — 60 no dia zero.
+- **Casas:** ligadas (`HOUSES`) — cada pessoa mora numa casa espalhada pelo domínio da sua cidade (ver `docs/worldbox/02-simulacao.md`).
+- **Andar mais longe de casa:** raio de território 22 (padrão 14) e chance diária de voltar 0,45 (padrão 0,55). Tribos com LLM e o rei ainda escolhem a própria coesão na política.
+- Medido em 30 anos sem LLM: povo mais espalhado (3,0 → 4,1 tiles), um pouco menos gente (−19%) e escaramuças entre vizinhos (0 → 173 batalhas).
+O jogo rodado sozinho continua com o padrão.
 
 **Etapa 2 — o reino** (`kingdom.py`): no dia zero o "Kingdom of Arthur" é fundado no lugar mais fértil de uma amostra tirada da seed (mesma seed, mesmo lugar), com sede em Camelot e 10 pessoas. Tudo sem editar as regras do jogo, ajustando de fora e só para objetos marcados:
 
 - **Arthur Pendragon, chefe fixo** — a escolha de chefe do jogo devolve sempre ele na tribo dele.
 - **Imortal** — saúde nunca abaixo de 1 (nem dentro do combate, para ninguém ganhar um abate falso), imune a todas as doenças, idade fixa em 30 anos; o Smite do mapa desvia dele. Nenhuma morte é registrada para ele.
-- **Um reino só** — não se divide nem se dissolve; se só o rei sobrar, chegam 6 colonos.
+- **Um reino que só se divide quando o rei manda** — nunca se dissolve nem se divide sozinho. Passando do tamanho de divisão do jogo (55), o relatório avisa o rei e ele pode decidir `found_colony`: a divisão do próprio jogo roda uma vez (sai a parte mais longe de Camelot, cerca de 40%), o rei fica, e a colônia começa amiga (relação +40). A ordem vale por um dia: se o reino encolheu abaixo de 55 antes de a colônia partir, ela caduca (com aviso no log) em vez de dividir o reino sozinha depois. Se só o rei sobrar, chegam 6 colonos.
 - **Fora das vagas de LLM das tribos** — as 3 vagas ficam com as outras tribos; o reino é decidido pela mente do próprio Arthur (etapa 3, abaixo).
 - **No mapa** — anel dourado, plaquinha "Arthur" com coroa e ponto no minimapa (recurso genérico do jogo, `LiveState.feature`).
 - **Reset do mundo** refunda o reino.
@@ -79,7 +84,7 @@ python arthur/run.py --no-open --port 8765 --arthur-port 8766
 **Etapa 3 — a mente do rei** (`council.py`): o reino é decidido pelo Arthur, não pelas mentes do jogo.
 
 - **O que ele lê:** a persona (temperamento, objetivos, linhas vermelhas, voz) no prompt de sistema e o mesmo relatório que qualquer tribo recebe (`_brief_tribe` do jogo: povo, fome, celeiro, profissões, tecnologias, vizinhos e relações, materiais), mais a última decisão dele. v1: sem conhecimento limitado.
-- **O que ele devolve:** `{"policy": {...formato do jogo...}, "rationale": "..."}` — a frase (`intent`) em inglês, porque vai para o log do jogo; a justificativa em português, para o HUD. Também aceita a política "solta" (formato do `mock`).
+- **O que ele devolve:** `{"policy": {...formato do jogo...}, "found_colony": true|false, "rationale": "..."}` — o prompt mostra só o formato, sem valores de exemplo (com um exemplo concreto ele copiava: decidiu "farm" 15 de 16 vezes, 6 delas com a frase do exemplo) — a frase (`intent`) em inglês, porque vai para o log do jogo; a justificativa em português, para o HUD. Também aceita a política "solta" (formato do `mock`).
 - **Validação:** a do jogo (`parse_policy`), mais a do Arthur: descarta tribo desconhecida ou ele mesmo, descarta invenção que o terreno não sustenta, e a **linha vermelha** — nada de guerra contra quem não está em guerra conosco e tem relação ≥ 0; um `raid` sem inimigo vira `defend`. Resposta vazia ou inválida mantém a política anterior e espera mais (backoff). Cada veto diz quem vetou: **o rei** (linha vermelha) ou **o jogo** (tribo inexistente, invenção impossível ou acima do limite de invenções próprias — 100 por tribo). Quando o reino chega ao limite, o relatório avisa o rei para não propor mais (economiza tokens).
 - **Quando pensa:** no primeiro dia; depois a cada 40 dias de jogo (o mesmo intervalo das tribos, no mínimo 20 s reais entre chamadas, pulando se nada mudou); antes disso se uma guerra começa ou termina ou se o celeiro cai abaixo de 25% (de novo só depois de voltar acima de 40%), com no mínimo 10 dias entre pensamentos antecipados.
 - **Custo:** mesmo interruptor geral e mesmo teto por minuto das tribos; interruptor próprio ("Decisões do Arthur") na aba LLMs; consumo separado lá. Fonte: a do `.env` (Gemini). `--no-ai` desliga ele também.

@@ -193,6 +193,7 @@ function decCard(d,past){
     (d.intent?'<div class="intent">“'+esc(d.intent)+'”</div>':'')+
     '<div class="why">'+esc(d.rationale||"")+'</div>'+
     (t?'<div class="note">'+esc(t)+'</div>':'')+
+    (d.colony?'<div class="note" style="color:var(--gold)">ordenou fundar uma colônia</div>':'')+
     vetoLine(d.vetoes,"king","vetado pelas regras do rei")+vetoLine(d.vetoes,"game","recusado pelo jogo")+
     '<div class="note">'+esc(d.model||"")+'</div></div>';
 }
