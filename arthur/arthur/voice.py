@@ -25,8 +25,7 @@ import json
 import time
 from typing import Any, Dict, List, Optional
 
-from .bridge import brief_tribe, chat, extract_json
-from .quota import QuotaGate
+from .bridge import QuotaGate, brief_tribe, chat, extract_json
 
 HISTORY_EXCHANGES = 6
 BUDGET_WAIT = 75.0  # a slot frees when the oldest call leaves the 60 s window: always within this

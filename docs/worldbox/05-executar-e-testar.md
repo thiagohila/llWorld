@@ -53,6 +53,7 @@ Outras flags de `main.py`: `--seed`, `--days`, `--width`, `--height`, `--populat
        python -m worldbox.main --no-ai --days 3000 --seed 42 | md5
      ```
      **[executado]** Referência: `46183c8d284315695c7706c0f923745a` (igual em 3.10, 3.12 e 3.14).
+  3. **Tudo num comando:** `tools/regress.sh` na raiz do llWorld — o md5 acima mais todos os testes de `tests/worldbox/` e `tests/arthur/` (~6 min). **[executado]** 2026-10-31: tudo passou.
 - Como os testes de IA offline funcionam (`tests/worldbox/test_ai_*.py`):
   - simular a API trocando `worldbox.ai.minds.chat` (mentes) ou `worldbox.ai.client.urllib.request.urlopen` (cliente e narrador) — nada vai para a rede;
   - **isolar do `.env` real**: `client._DOTENV_LOADED = True` antes de qualquer chamada e limpar `LLM_*`/chaves do ambiente — senão o teste lê a fonte configurada do usuário;

@@ -4,7 +4,7 @@ Atualizado em 2026-10-21. O *quê* está em `../llWorld-visao-produto.md`; ideia
 
 ## Estado atual
 
-### O jogo — fork `worldbox/` em `9415d94` (funcionando)
+### O jogo — fork `worldbox/` em `a30d1b6` (funcionando)
 
 Roda como veio do `ryfcx/worldbox`, com melhorias pontuais — nenhuma regra de simulação mudou (md5 de regressão idêntico desde o início):
 
@@ -19,6 +19,7 @@ Roda como veio do `ryfcx/worldbox`, com melhorias pontuais — nenhuma regra de 
 | Para o Arthur | pessoas destacadas no mapa (`LiveState.feature`) + foco por mensagem; fundação de tribo reutilizável (`society/founding.py`) | `bbbea3a` |
 | Mapa | plantações, casinhas, invenções, guerras, amizades, surtos e ruínas no mapa; bonecos andando suave entre atualizações; limite de invenções próprias 8 → 100 | `a5409d3` |
 | Eras e casas | 6 eras depois do Ferro (até Information Age: Moon Landing, Internet, Genetics); casas opcionais que espalham as pessoas pelo domínio (ligadas no mundo do Arthur) | `a4bc380` |
+| Robustez | portão de cota (429) para todas as mentes, espera crescente; chefe estável opcional (`culture.stable_chieftain`, padrão desligado); erro 500 sem detalhes; botão de esconder o painel da direita | `a30d1b6`, `9415d94` |
 
 Ainda em aberto no jogo: segurança do servidor local (CSRF, DNS rebinding), determinismo com duas chaves, sem suíte de testes — ver `pendencias/jogo.md`.
 
@@ -52,10 +53,10 @@ llWorld/
 | Decidir pela tribo do Arthur | subclasse de `ai.minds.MindDirector` atribuída a `engine.minds`; validar com `parse_policy` / `TribePolicy` | **pronto** [código] |
 | Chamar a LLM | `ai.client.chat()` com as fontes do `.env` (DeepSeek, OpenAI, compatível com OpenAI, `mock`); `ChatResult` traz `status`, `fatal`, tokens | **pronto** [código] |
 | Ligar/desligar LLM em jogo | `engine.minds.paused` / `set_paused()`, `set_call_cap()`, `forget_policies()`; HTTP `/control?action=ai` / `ai_cap` / `ai_forget`; botão **AI** e tecla `M` no HUD; `ai on/off/cap/forget` no terminal | **pronto** [código] |
-| Controlar custo | o conselho do Arthur **usa o mesmo teto** (`call_cap`, `calls_last_minute`; registra as próprias chamadas na mesma janela `minds._recent_calls`), **respeita `paused`**, o cadenciamento das mentes (`think_interval_days`, `min_think_seconds`, pular se nada mudou) e o backoff; erro fatal para todas as mentes (`minds.halted`). A conversa (etapa 4) usa o mesmo teto e espera vaga; enquanto espera, `minds.call_cap` envolvido na instância mostra uma vaga a menos para tribos e conselho (o jogador passa na frente). 429 (cota esgotada): conselho e conversa esperam num portão próprio do Arthur (`quota.py`), lendo `ChatResult.status` | **pronto** [executado] |
+| Controlar custo | o conselho do Arthur **usa o mesmo teto** (`call_cap`, `calls_last_minute`; registra as próprias chamadas na mesma janela `minds._recent_calls`), **respeita `paused`**, o cadenciamento das mentes (`think_interval_days`, `min_think_seconds`, pular se nada mudou) e o backoff; erro fatal para todas as mentes (`minds.halted`). A conversa (etapa 4) usa o mesmo teto e espera vaga; enquanto espera, `minds.call_cap` envolvido na instância mostra uma vaga a menos para tribos e conselho (o jogador passa na frente). 429 (cota esgotada): tribos, conselho e conversa esperam no mesmo portão do jogo (`engine.minds.quota`, `ai/quota.py`) | **pronto** [executado] |
 | Decidir pela tribo do Arthur (feito) | em vez de subclasse: `engine.minds.policy_for` envolvido na instância devolve a política do conselho para o reino (sempre o mesmo objeto, que o motor edita); a diplomacia (`toward`) é empurrada pelo próprio conselho, com os mesmos valores diários do jogo; "esquecer decisões" do mapa também apaga a dele | **pronto** [executado] |
 | Fundar o reino | `society.founding.found_tribe` / `settle_people` (extraídos de `LiveState.found_civ`, que agora os usa; comportamento idêntico) | **pronto** [executado] |
-| Arthur fixo como chefe | patch por fora em `society.culture.choose_chieftain` (chamado via módulo), só para o agente marcado `llworld_king` | **pronto** [executado] |
+| Arthur fixo como chefe | patch por fora em `society.culture.choose_chieftain` (chamado via módulo), só para o agente marcado `llworld_king`. As outras tribos do mundo do Arthur usam `config.culture.stable_chieftain` (chefe até morrer ou sair) | **pronto** [executado] |
 | Arthur imortal (sem sucessão) | por fora: `KingNeeds` (saúde nunca abaixo de 1, nem na hora do combate), imunidade permanente a todas as doenças, idade fixa; Smite do mapa desvia dele (envolve `LiveState.act`) — nenhuma morte ou abate é contado para ele | **pronto** [executado] |
 | Reino só se divide quando o rei manda; nunca se dissolve | patch por fora em `GroupRegistry.try_split` / `find_unviable`, só para a tribo marcada `llworld_realm`; acima do tamanho de divisão o rei pode decidir `found_colony` e a divisão do próprio jogo roda uma vez, sem levar o rei, com a colônia começando amiga (+40); se só o rei sobrar, chegam 6 colonos | **pronto** [executado] |
 | Reino fora das mentes de LLM | `engine.minds._eligible` reimplementado na instância sem o reino (as 3 vagas vão para as outras tribos) | **pronto** [executado] |

@@ -22,7 +22,7 @@ Escuta só em `127.0.0.1` **[código]** — não é exposto na rede. Os riscos v
 | **CSRF**: rotas que alteram estado são GET, sem checagem de `Origin`/token | **[executado]** `/act?tool=plague` com `Origin: https://site-malicioso.example` foi aceito | qualquer site aberto no navegador enquanto o mapa roda pode disparar ferramentas de deus, fundar civilizações (`/found`), pausar, e chamar `/explain` — com chave configurada, gasta créditos ou a cota diária grátis |
 | **DNS rebinding**: `Host` não é validado | **[executado]** `Host: evil.example:8765` respondeu 200 | um site pode ler `/state` (estado do mundo, erros da API) |
 | **Travamento por raio**: `radius` de `/act` não tem limite | **[código]** `tiles_within` itera `(2r+1)` por linha válida, segurando `runner.lock` | um `radius` enorme congela a simulação |
-| Erros 500 com texto da exceção | **[código]** `send_error(500, str(error))` | vazamento menor de detalhes internos |
+| ~~Erros 500 com texto da exceção~~ resolvido em `a30d1b6` | **[executado]** agora "Internal server error"; traceback no terminal (`tests/worldbox/test_extensions.py`) | — |
 
 - **[código]** XSS: o front usa `esc()` em todo texto vindo de LLM ou nomes de tribo antes de `innerHTML`. `esc` não escapa aspas, mas os únicos usos em atributo recebem dados do servidor, não da LLM. Sem achado.
 - **[código]** Nome de civilização em `/found` é filtrado para alfanuméricos e ` -'` (máx. 40) antes de ir para o prompt.

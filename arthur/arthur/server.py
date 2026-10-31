@@ -151,7 +151,7 @@ class ArthurServer:
             council_use = council.usage_snapshot() if council is not None else {}
             council_status = council.status() if council is not None else "none"
             council_house = council.house() if council is not None else {}
-            retry_min = -(-council.quota.retry_in() // 60) if council is not None else 0
+            retry_min = -(-minds.quota.retry_in() // 60)  # the game's gate: tribes, council, chat
         paused, halted = mind_use["paused"], mind_use["halted"]
         usable = available_houses()
         usable_keys = {(s["house"], s["model"]) for s in usable}
@@ -199,7 +199,7 @@ class ArthurServer:
                 "id": "tribes", "name": "Mentes das tribos", "where": "jogo",
                 "what": "decidem a política de cada tribo: profissões, diplomacia, invenções",
                 "model": ", ".join(tribe_models) or "—",
-                "state": master_state(None if minds_on else "desligado (--no-ai)"),
+                "state": master_state((waiting if retry_min else None) if minds_on else "desligado (--no-ai)"),
                 "control": "geral",
                 "slots": {"managed": mind_use["managed"], "max": mind_use["max_minds"]},
                 "usage": {"calls": mind_use["calls"], "skipped": mind_use["skipped"], "failures": mind_use["failures"],

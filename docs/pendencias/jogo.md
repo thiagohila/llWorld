@@ -1,6 +1,6 @@
 # Pendências — jogo (fork `worldbox/`)
 
-Estado em 2026-10-21 (fork em `9415d94`): o jogo funciona; o que segue são riscos, limitações e lacunas para a próxima fase. Problemas e limitações encontrados no fork. Corrigir aqui significa **editar o fork** (commit no submódulo) ou contornar pelo `arthur/` — decidir caso a caso.
+Estado em 2026-10-21 (fork em `a30d1b6`): o jogo funciona; o que segue são riscos, limitações e lacunas para a próxima fase. Problemas e limitações encontrados no fork. Corrigir aqui significa **editar o fork** (commit no submódulo) ou contornar pelo `arthur/` — decidir caso a caso.
 
 Formato: `- [ ] **título** — detalhe. Onde. Ref.` · Prioridade: 🔴 alta · 🟡 média · ⚪ baixa. Ao resolver, marque `[x]` e anote commit/data.
 
@@ -9,7 +9,7 @@ Formato: `- [ ] **título** — detalhe. Onde. Ref.` · Prioridade: 🔴 alta ·
 - [ ] 🔴 **CSRF nas rotas que alteram estado** — `/act`, `/found`, `/control`, `/explain` são GET sem token nem checagem de `Origin`; qualquer site aberto no navegador dispara ações (e gasta API se houver chave). `cli/webview.py:_handler_factory`. Ref.: `docs/worldbox/07-seguranca.md`.
 - [ ] 🔴 **DNS rebinding** — `Host` não é validado; um site externo pode ler `/state`. `cli/webview.py`. Ref.: `07-seguranca.md`.
 - [ ] 🟡 **`radius` sem limite em `/act`** — valor enorme congela a simulação segurando o lock. `cli/webview.py:LiveState.act`, `world/world.py:tiles_within`.
-- [ ] ⚪ **Erro 500 devolve texto da exceção** — `send_error(500, str(error))`. `cli/webview.py`.
+- [x] ⚪ **Erro 500 devolve texto da exceção** — agora responde "Internal server error" e o traceback vai para o terminal. `a30d1b6`, 2026-10-31.
 - [ ] ⚪ **`load_dotenv` sobe a árvore de diretórios** — pode carregar um `.env` alheio em `~/Documents` ou `~`. `ai/client.py:load_dotenv`.
 - [ ] ⚪ **Erro da API repassado com até 300 caracteres** — exibido no painel Minds; checar se algum provedor ecoa a chave. `ai/client.py:chat`.
 
@@ -33,7 +33,7 @@ Formato: `- [ ] **título** — detalhe. Onde. Ref.` · Prioridade: 🔴 alta ·
 
 Não são bugs do jogo; são lacunas para o que queremos construir. Ref.: `docs/worldbox/06-extensao-e-armadilhas.md`.
 
-- [ ] 🔴 **Chefe reescolhido todo dia** — não existe líder fixo. `society/culture.py:choose_chieftain`, `simulation/engine.py:_process_roles_and_leadership`. Contornável por fora (patch) ou gancho no fork.
+- [x] 🔴 **Chefe reescolhido todo dia** — opção `config.culture.stable_chieftain` (padrão desligado, md5 igual): o chefe fica até morrer ou sair da tribo; ligada no mundo do Arthur. `a30d1b6`, 2026-10-31. O rei continua fixo pelo patch do Arthur.
 - [ ] 🟡 **Memória do agente com 8 entradas e sem relações individuais** — `agents/agent.py:Memory`.
 - [ ] 🟡 **`toward` aplicado todo dia** — um "war" ≈ −128 de relação em 40 dias; magnitude é parâmetro de gameplay. `ai/minds.py:_nudge_diplomacy`.
 - [x] 🟡 **Fundar civilização só existe dentro do servidor** — extraída para `society/founding.py` (`found_tribe`, `settle_people`); `LiveState.found_civ` usa e dá o mesmo resultado com a mesma seed (comparado antes/depois). 2026-10-21.

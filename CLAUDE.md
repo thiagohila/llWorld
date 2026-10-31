@@ -15,7 +15,6 @@ Princípio: **a simulação manda nas regras do mundo; a LLM propõe decisões d
 
 - **`worldbox/`** — fork de `ryfcx/worldbox` (simulador em Python; **não** é o WorldBox – God Simulator comercial), submódulo git (`thiagohila/worldbox`). "O jogo" = sempre este fork. Tratar como terceiros: não editar; se inevitável, mudança mínima e genérica, commitada no submódulo e depois o ponteiro no repo raiz.
 - **`arthur/`** — **Arthur**, a parte do Thiago no projeto (o conselheiro do Rei Arthur). Tem **HUD e servidor próprios** (`http://127.0.0.1:8766/`, com o mapa do jogo num frame), no mesmo processo do jogo, lendo o mundo sob `runner.lock`. Usa o jogo só pela superfície pública, sempre via `arthur/arthur/bridge.py` — contrato em `docs/roadmap.md` → Interfaces. Rodar: `python arthur/run.py` (da raiz). O jogo tem um mecanismo genérico de painéis (`LiveServer.add_extension`) que o Arthur não usa.
-- **`worldbox-clone-backup/`** — cópia não versionada do fork. Não editar nem commitar.
 
 ## Onde está o contexto
 
@@ -47,7 +46,7 @@ Leia sob demanda; não carregue tudo.
 - Dentro de `worldbox/`: `PYTHONDONTWRITEBYTECODE=1 python -m worldbox.main --no-ai --days 3000 --seed 42`.
 - Mapa ao vivo em `http://127.0.0.1:8765/` (não `localhost`: OrbStack usa a porta). Com IA: `python -m worldbox.main --live` (sem `--no-ai`).
 - LLM: `worldbox/.env` (gitignored, **nunca ler nem exibir valores**). Hoje configurado com Gemini grátis via `LLM_BASE_URL`/`LLM_MODEL`/`LLM_API_KEY`; para não estourar o plano grátis, `LLM_MAX_CALLS_PER_MINUTE=5`. Para desenvolver sem rede nem custo: `LLM_BASE_URL=mock`.
-- Testes offline (API simulada, sem rede, nunca leem o `.env`): `tests/worldbox/` — rodar conforme `tests/worldbox/README.md`. Regressão da simulação = md5 com mesmo seed (`--no-ai`, sem chaves no ambiente). Medições: `tools/perf/`.
+- Testes offline (API simulada, sem rede, nunca leem o `.env`): `tests/worldbox/` e `tests/arthur/` — rodar conforme `tests/worldbox/README.md`. Regressão da simulação = md5 com mesmo seed (`--no-ai`, sem chaves no ambiente). **Tudo de uma vez: `tools/regress.sh`** (md5 + todos os testes, ~6 min). Medições: `tools/perf/`.
 
 ## Regra de remotes do jogo
 

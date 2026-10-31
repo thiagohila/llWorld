@@ -55,6 +55,15 @@ try:
     s, r = req("POST", "/ext/echo/boom", {}, token=token)
     check("extension errors do not leak details", r.get("ok") is False and "secret" not in json.dumps(r), r)
     check("original routes unchanged", req("GET", "/state?since=-1")[0] == 200)
+    real_snapshot = server.state.snapshot
+    def broken(*a, **k): raise RuntimeError("secret internals /Users/someone/path")
+    server.state.snapshot = broken
+    import contextlib, io
+    with contextlib.redirect_stderr(io.StringIO()) as err:
+        s, body = req("GET", "/state?since=-1")
+    server.state.snapshot = real_snapshot
+    check("a crash answers 500 without the exception text", s == 500 and "secret" not in str(body) and "/Users" not in str(body), (s, str(body)[:200]))
+    check("the details go to the terminal", "secret internals" in err.getvalue())
     try:
         server.add_extension(type("Bad", (), {"id": "Bad Id!"})()); check("bad id rejected", False)
     except ValueError:

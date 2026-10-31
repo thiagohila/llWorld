@@ -9,7 +9,7 @@ Formato: `- [ ] **título** — detalhe.` · Prioridade: 🔴 alta · 🟡 médi
 - [x] 🟡 **Sem remote no repo llWorld** — resolvido em 2026-10-21: `origin` = `git@github.com:thiagohila/llWorld.git`, branch `main`.
 - [x] 🟡 **README raiz desatualizado** — reescrito em 2026-10-21: origem do fork, estado atual, como rodar, links para visão, roadmap e `CLAUDE.md`.
 - [ ] ⚪ **Acompanhar o upstream** — checar de tempos em tempos `git -C worldbox ls-remote upstream` e decidir se puxa mudanças de `ryfcx/worldbox`.
-- [ ] ⚪ **Destino do `worldbox-clone-backup/`** — cópia idêntica do fork, hoje no `.gitignore`. Manter, mover para fora do repo ou apagar.
+- [x] ⚪ **Destino do `worldbox-clone-backup/`** — apagado em 2026-10-31 (clone limpo do upstream em `4579b3c`, sem mudanças; o fork tem esse histórico).
 - [ ] ⚪ **`python3` global do pyenv quebrado** — 3.8.13 sem OpenSSL 1.1. O projeto usa a `.venv` (3.14), mas o global da máquina segue quebrado.
 
 ## Próxima fase — `arthur/` (ver `../roadmap.md`)
@@ -22,7 +22,7 @@ Formato: `- [ ] **título** — detalhe.` · Prioridade: 🔴 alta · 🟡 médi
 - [ ] ⚪ **Espera após erro passageiro** — como nas tribos, uma falha faz o rei esperar 40 dias de jogo (dobrando a cada falha). Um 503 logo no início deixa o reino nas regras normais por esse tempo. Talvez esperar menos em erro passageiro (503/429) do que em resposta inválida.
 - [x] 🟡 **Etapa 4 — chat do conselheiro** — `voice.py` + `Council.hear`: o rei responde em personagem e lê o conselho; o que não recusou pesa na próxima decisão; urgente antecipa; nunca muda o mundo direto. 2026-10-31.
 - [ ] 🟡 **Ver a conversa com uma LLM de verdade** — testada só com API simulada e `mock` (o `mock` responde a conversa com um texto fixo em inglês). A cota grátis do Gemini está esgotada desde 2026-10-30 (429 mesmo após 12 h): esperar renovar, ou outra chave/modelo.
-- [x] ⚪ **Cota esgotada (429)** — o Arthur (conselho e conversa) espera 1/5/15/30/60 min em vez de insistir (`quota.py`). As tribos do jogo continuam insistindo no ritmo delas. 2026-10-31.
+- [x] ⚪ **Cota esgotada (429)** — tribos, conselho e conversa esperam 1/5/15/30/60 min num portão só (`worldbox/ai/quota.py`, `engine.minds.quota`: mesma chave, mesma cota) em vez de insistir; 429 de chamadas já em voo não aumentam a espera. 2026-10-31.
 - [ ] ⚪ **Etapa 5 — memória, confiança, conhecimento limitado.**
 - [ ] ⚪ **Etapa 6 — avaliação pelos critérios da visão §11.**
 
@@ -68,7 +68,7 @@ Decididas em 2026-10-21 pela regra "o mais simples" — ver `../roadmap.md`.
 
 ## Qualidade e processo
 
-- [ ] 🟡 **Estratégia de testes do `arthur/`** — padrão já provado no jogo: API simulada, `.env` isolado, mente `mock` para cenários por seed, regressão md5 do fork (`tests/worldbox/`). Aplicar o mesmo no Arthur.
+- [x] 🟡 **Estratégia de testes do `arthur/`** — feita: API simulada, `.env` isolado, `mock`, md5 do fork; 4 suítes em `tests/arthur/`. 2026-10-31.
 - [x] 🟡 **Testes offline fora do repo** — levados para `tests/worldbox/` (mentes, fontes de LLM, Smite) e `tools/perf/` (medições) em 2026-10-21.
-- [ ] ⚪ **Script de regressão** — automatizar a checagem de md5 (`docs/worldbox/05-executar-e-testar.md`) junto com `tests/worldbox/` em um comando só.
+- [x] ⚪ **Script de regressão** — `tools/regress.sh`: md5 de referência + todos os testes do jogo e do Arthur, num comando (~6 min); `--md5` ou `--tests` para só uma parte. 2026-10-31.
 - [ ] ⚪ **Manutenção dos docs** — ao atualizar o submódulo, revisar `docs/worldbox/` e o hash em `docs/README.md` e `docs/ambiente.md`.

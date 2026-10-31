@@ -31,6 +31,9 @@ INITIAL_POPULATION = 50  # people scattered at the start, before any tribe
 HOUSES = True
 TERRITORY_RADIUS = 22
 COHESION_CHANCE = 0.45
+# A chieftain keeps the post until death or leaving, instead of losing it to
+# whoever has the most prestige that day (Arthur's own realm is the king's anyway).
+STABLE_CHIEFTAIN = True
 
 
 def arthur_config(config: Config) -> Config:
@@ -41,6 +44,7 @@ def arthur_config(config: Config) -> Config:
         agents=replace(config.agents, initial_population=INITIAL_POPULATION),
         settlements=replace(config.settlements, houses=HOUSES),
         groups=replace(config.groups, territory_radius=TERRITORY_RADIUS, cohesion_chance=COHESION_CHANCE),
+        culture=replace(config.culture, stable_chieftain=STABLE_CHIEFTAIN),
     )
 
 

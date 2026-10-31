@@ -3,4 +3,3 @@ __pycache__/
 *.py[cod]
 .env
 .DS_Store
-worldbox-clone-backup/

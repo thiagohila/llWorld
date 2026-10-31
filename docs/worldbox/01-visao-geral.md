@@ -52,7 +52,7 @@ Execução contínua: `SimulationRunner` roda `step()` numa thread segurando `ru
 | agent | uma pessoa | `agents/agent.py:Agent` |
 | goal | ação do dia: eat, seek_food, rest, fight, flee, seek_mate, wander | `agents/behavior.py:Goal` |
 | group / tribe | tribo; tem conhecimento, chefe, assentamento | `society/groups.py:Group` |
-| chieftain | chefe da tribo, reescolhido todo dia por prestígio | `society/culture.py:choose_chieftain` |
+| chieftain | chefe da tribo, reescolhido todo dia por prestígio (ou fixo até morrer, com `stable_chieftain`) | `society/culture.py:choose_chieftain` |
 | role | profissão: child, forager, farmer, warrior, scholar, healer, elder | `society/roles.py:Role` |
 | settlement | assentamento: Camp → Hamlet → Village → Town → City | `society/settlements.py` |
 | era | Stone, Agricultural, Bronze, Iron Age (originais) + Classical, Medieval, Renaissance, Industrial, Modern, Information Age (acrescentadas em 2026-10-30) | `society/technology.py:ERAS` |

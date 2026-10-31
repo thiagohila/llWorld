@@ -107,5 +107,7 @@ check("map marks only the new king", [f["id"] for f in game.state.snapshot()["fe
 days(400)
 check("still chief after reset and a year", king.alive and realm.chieftain_id == king.id)
 
+check("Arthur's world keeps chieftains in post (stable_chieftain)", engine.config.culture.stable_chieftain is True)
+
 print("\nRESULT:", "all passed" if not fails else f"{len(fails)} failed: {fails}")
 sys.exit(1 if fails else 0)

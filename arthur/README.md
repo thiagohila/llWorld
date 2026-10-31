@@ -23,7 +23,6 @@ arthur/
     persona.py          quem é o Arthur (nome, reino, idade, traços)
     kingdom.py          o reino no mundo: fundação, regras do rei, marca no mapa
     council.py          a mente do rei: decide a política do reino com a LLM
-    quota.py            espera quando o provedor recusa por cota (429)
     advisor.py          a conversa com o rei (mensagens, interruptores, histórico)
     voice.py            a voz do rei: responde ao conselheiro com a LLM
     server.py           servidor do Arthur: página + /api protegida
@@ -71,6 +70,7 @@ python arthur/run.py --no-open --port 8765 --arthur-port 8766
 - **População inicial:** **50** pessoas soltas (`INITIAL_POPULATION`; padrão 100) mais as 10 do reino — 60 no dia zero.
 - **Casas:** ligadas (`HOUSES`) — cada pessoa mora numa casa espalhada pelo domínio da sua cidade (ver `docs/worldbox/02-simulacao.md`).
 - **Andar mais longe de casa:** raio de território 22 (padrão 14) e chance diária de voltar 0,45 (padrão 0,55). Tribos com LLM e o rei ainda escolhem a própria coesão na política.
+- **Chefe estável:** `STABLE_CHIEFTAIN` — nas outras tribos, o chefe fica até morrer ou sair, em vez de perder o posto todo dia para quem tem mais prestígio (`config.culture.stable_chieftain`). O reino é sempre do rei.
 - Medido em 30 anos sem LLM: povo mais espalhado (3,0 → 4,1 tiles), um pouco menos gente (−19%) e escaramuças entre vizinhos (0 → 173 batalhas).
 O jogo rodado sozinho continua com o padrão.
 
@@ -90,7 +90,7 @@ O jogo rodado sozinho continua com o padrão.
 - **Validação:** a do jogo (`parse_policy`), mais a do Arthur: descarta tribo desconhecida ou ele mesmo, descarta invenção que o terreno não sustenta, e a **linha vermelha** — nada de guerra contra quem não está em guerra conosco e tem relação ≥ 0; um `raid` sem inimigo vira `defend`. Resposta vazia ou inválida mantém a política anterior e espera mais (backoff). Cada veto diz quem vetou: **o rei** (linha vermelha) ou **o jogo** (tribo inexistente, invenção impossível ou acima do limite de invenções próprias — 100 por tribo). Quando o reino chega ao limite, o relatório avisa o rei para não propor mais (economiza tokens).
 - **Quando pensa:** no primeiro dia; depois a cada 40 dias de jogo (o mesmo intervalo das tribos, no mínimo 20 s reais entre chamadas, pulando se nada mudou); antes disso se uma guerra começa ou termina ou se o celeiro cai abaixo de 25% (de novo só depois de voltar acima de 40%), com no mínimo 10 dias entre pensamentos antecipados.
 - **Custo:** mesmo interruptor geral e mesmo teto por minuto das tribos; interruptor próprio ("Decisões do Arthur") na aba LLMs; consumo separado lá. Fonte: a do `.env` (Gemini). `--no-ai` desliga ele também.
-- **Cota esgotada (429):** o rei para de tentar e espera — 1 min, depois 5, 15, 30 e 1 h a cada 429 seguido; qualquer resposta boa zera (`quota.py`, compartilhado com a conversa). O HUD mostra "esperando a cota da LLM (429)" e quando tenta de novo. Motivo: o plano grátis do Gemini esgotou numa noite e o rei insistiu ~230 vezes em vão. As tribos do jogo seguem o próprio ritmo (continuam tentando).
+- **Cota esgotada (429):** o rei para de tentar e espera — 1 min, depois 5, 15, 30 e 1 h a cada 429 seguido; qualquer resposta boa zera. O portão é o do jogo (`engine.minds.quota`, `worldbox/ai/quota.py`), o mesmo das tribos e da conversa: é a mesma chave, então um 429 de qualquer um pausa todos. O HUD mostra "esperando a cota da LLM (429)" e quando tenta de novo. Motivo: o plano grátis do Gemini esgotou numa noite e o rei insistiu ~230 vezes em vão (as tribos, ~1.000).
 - **Como chega ao mundo:** o motor lê a política dele por `engine.minds.policy_for`; a diplomacia é empurrada pelo próprio conselho, todo dia, nos mesmos valores das tribos. Ele não ocupa vaga de LLM das tribos (no HUD do jogo, o contador geral de "mentes" passa a incluir o reino, porque lê por `policy_for`).
 
 **Etapa 4a — a voz do rei** (`voice.py`): o rei responde ao conselheiro.

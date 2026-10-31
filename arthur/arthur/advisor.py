@@ -14,7 +14,7 @@ Rules this extension keeps from the start:
 
 * the chat never changes the world; it only reads a little of it;
 * it obeys the game's LLM switch (``engine.minds.paused``), its own switch,
-  the per-minute budget and the quota gate;
+  the per-minute budget and the game's quota gate;
 * replies are worked out on their own thread, so neither the HTTP request
   nor the simulation waits for them.
 """

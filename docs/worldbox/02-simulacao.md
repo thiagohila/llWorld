@@ -11,7 +11,7 @@
 ## Tribos — `society/groups.py`
 
 - **[código]** `GroupRegistry.try_form_or_join`: tribos surgem por encontro. Dividem-se ao crescer (`try_split`, `GroupConfig.split_size`) e se dissolvem quando pequenas (`find_unviable`).
-- **[código]** Chefe reescolhido todo dia por prestígio = idade + 3×filhos + 2×abates (`culture.py:choose_chieftain`); puxa a agressividade dos membros (`apply_chieftain_influence`).
+- **[código]** Chefe reescolhido todo dia por prestígio = idade + 3×filhos + 2×abates (`culture.py:choose_chieftain`); puxa a agressividade dos membros (`apply_chieftain_influence`). Com `config.culture.stable_chieftain` (padrão desligado) o chefe fica até morrer ou sair da tribo, e só então se escolhe outro (`engine.py:_process_roles_and_leadership`); ligado no mundo do Arthur.
 - **[código]** Profissões redistribuídas todo dia (`roles.py:assign_roles`), por proporções de `RoleConfig` ou da política da mente.
 
 ## Assentamentos, tecnologia, cultura

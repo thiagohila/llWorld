@@ -60,6 +60,34 @@ tribes_seen = len({1}) and u["failures"]
 check("C backoff: failures counted", u["failures"] == u["calls"] > 0, u)
 check("C backoff: far fewer calls than days x tribes", u["calls"] < 200, u["calls"])
 
+# C2. Quota spent (429): one gate for every mind, waits that grow, any answer reopens.
+calls.clear()
+answer = {"r": None}
+def gated(**kw):
+    calls.append(kw); return answer["r"] or ChatResult(error="API returned 429: quota exceeded", status=429)
+eng = engine_with(gated, min_think_seconds=0.0, max_calls_per_minute=10_000, failure_backoff_seconds=0.0)
+gate, clock = eng.minds.quota, [1000.0]
+gate._clock = lambda: clock[0]
+run(eng, 400, settle=0.0005)
+burst = len(calls)
+check("C2 a 429 closes the gate for every mind", burst > 0 and not gate.open() and gate.retry_in() == 60, (burst, gate.retry_in()))
+late = ChatResult(error="API returned 429", status=429)
+gate.record(late); gate.record(late)  # calls that were in flight when it closed
+check("C2 in-flight 429s do not escalate the wait", gate.strikes == 1 and gate.retry_in() == 60, (gate.strikes, gate.retry_in()))
+check("C2 HUD sees the wait", eng.minds.usage_snapshot()["quota_wait"] == 60)
+run(eng, 1500, settle=0.0005)
+check("C2 nobody calls while it is closed", len(calls) == burst, (burst, len(calls)))
+clock[0] += 61
+run(eng, 400, settle=0.0005)
+check("C2 tries again after the wait; still 429 -> waits longer", len(calls) > burst and gate.retry_in() == 300, gate.retry_in())
+answer["r"] = ChatResult(text=POLICY, model="deepseek-flash", status=200)
+clock[0] += 301
+run(eng, 400, settle=0.0005)
+check("C2 an answer reopens it", gate.open() and gate.strikes == 0 and len(eng.minds.policies) > 0)
+eng.minds.quota.until, eng.minds.quota.strikes = clock[0] + 500, 2
+eng.reset(7)
+check("C2 the provider's quota outlives a world reset", not gate.open())
+
 # D. Bad key (401): minds halt after the first batch.
 calls.clear()
 def rejected(**kw):

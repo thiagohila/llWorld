@@ -18,7 +18,8 @@ own, takes its calls from the same per-minute budget as the tribe minds
 (``think_interval_days``, ``min_think_seconds``), skipping when nothing
 changed -- except that a war starting or ending, the granary running low or
 having no policy at all make him think at the next chance. After a 429 (the
-quota is spent) he waits on a gate shared with the chat (``quota.QuotaGate``).
+quota is spent) he waits on the game's gate (``engine.minds.quota``), shared
+with the tribe minds and the chat: same key, same quota.
 
 Advice (stage 4b): what the advisor said in the chat and the king did not
 turn down waits here (``hear``) and goes into his next report; he answers
@@ -40,10 +41,9 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Deque, Dict, List, Optional, Tuple
 
 from .bridge import (
-    ChatResult, EventKind, available_houses, brief_tribe, chat, custom_count, extract_json,
-    house_spec, parse_policy, scan_materials, situation_signature, validate_proposal,
+    ChatResult, EventKind, QuotaGate, available_houses, brief_tribe, chat, custom_count,
+    extract_json, house_spec, parse_policy, scan_materials, situation_signature, validate_proposal,
 )
-from .quota import QuotaGate
 
 LOW_GRANARY = 0.25  # below this fraction full, the king is asked to think now...
 REARM_GRANARY = 0.40  # ...and not again until it has been back above this
@@ -114,7 +114,7 @@ class Council:
         self.engine = engine
         self.runner = runner
         self.persona = persona
-        self.quota = quota or QuotaGate()
+        self.quota = quota or engine.minds.quota  # the game's: same key as the tribes
         self.enabled = True  # Arthur's own switch, under the game's master switch.
         self.log: Deque[Dict[str, Any]] = deque(maxlen=LOG_SIZE)
         self._inbox: "queue.Queue[Tuple[int, int, str, Any]]" = queue.Queue()
